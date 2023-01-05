@@ -18,7 +18,7 @@ fn main() -> Result<(), Error> {
             println!("(Got {} messages so far)", num_messages);
             let gui = false;
             if gui {
-                let mut frame = CvImage.from_imgmsg(frame).as_cvmat("bgr8")
+                let mut frame = CvImage.from_imgmsg(frame).as_cvmat("bgr8");
                 if frame.size()?.width > 0 {
                     highgui::imshow(window, &mut frame)?;
                 }
