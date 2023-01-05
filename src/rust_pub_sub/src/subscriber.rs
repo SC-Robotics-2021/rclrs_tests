@@ -16,10 +16,10 @@ fn main() -> Result<(), Error> {
         rclrs::QOS_PROFILE_DEFAULT,
         move |msg: sensor_msgs::msg::Image| {
             num_messages += 1;
-            println!("(Got {} messages so far)", num_messages);
+            println!("(Got {} messages so far)", &num_messages);
             let gui = false;
             if gui {
-                let frame = CvImage::from_imgmsg(msg)::as_cvmat("bgr8");
+                let frame = CvImage::from_imgmsg(msg).as_cvmat("bgr8");
                 if frame.size()?.width > 0 {
                     highgui::imshow(window, frame)?;
                 }

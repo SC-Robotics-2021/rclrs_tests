@@ -12,6 +12,7 @@ repository = "https://github.com/OmkarKabadagi5823/cv-bridge-rs.git"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "*"
 byteorder = "1.4.3"
 image = "0.24.5"
 opencv = "0.74.2"

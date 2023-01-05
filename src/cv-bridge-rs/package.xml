@@ -5,6 +5,7 @@
   <maintainer email="user@todo.todo">user</maintainer>
   <license>TODO: License declaration</license>
 
+  <depend>anyhow</depend>
   <depend>byteorder</depend>
   <depend>image</depend>
   <depend>opencv</depend>
