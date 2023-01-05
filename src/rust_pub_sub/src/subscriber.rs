@@ -25,6 +25,7 @@ fn main() -> Result<(), Error> {
                 }
                 let key = highgui::wait_key(10)?;
             }
+            Ok(())
         },
     )?;
 

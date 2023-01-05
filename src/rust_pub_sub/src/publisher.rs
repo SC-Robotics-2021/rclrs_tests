@@ -13,20 +13,21 @@ fn main() -> Result<(), Error> {
 
     let mut publish_count: u32 = 0;
 
+
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
     
     if !videoio::VideoCapture::is_opened(&cam)? {
-		panic!("Unable to open default camera!");
-	}
+		    panic!("Unable to open default camera!");
+	  } 
     while context.ok() {
         publish_count += 1;
         println!("Publishing frame {}!", &publish_count);
-		let mut frame = Mat::default();
-		cam.read(&mut frame)?;
+		    let mut frame = Mat::default();
+		    cam.read(&mut frame)?;
         let msg = CvImage::from_cvmat(frame).into_imgmsg();
         publisher.publish(msg)?;
         std::thread::sleep(std::time::Duration::from_millis(500));
-	}
+	  }
 
     Ok(())
 }
