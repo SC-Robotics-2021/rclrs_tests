@@ -4,7 +4,7 @@ use anyhow::{Error, Result};
 use cv_bridge::CvImage;
 
 fn main() -> Result<(), Error> {
-    let context = rclrs::context::Context::new(env::args())?;
+    let context = rclrs::Context::new(env::args())?;
 
     let node = rclrs::create_node(&context, "rust_publisher")?;
 
@@ -15,7 +15,8 @@ fn main() -> Result<(), Error> {
 
     let mut publish_count: u32 = 0;
 
-    let mut cam = videoio::VideoCapture::new_default(0)?;
+    let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
+    
     if !videoio::VideoCapture::is_opened(&cam)? {
 		panic!("Unable to open default camera!");
 	}

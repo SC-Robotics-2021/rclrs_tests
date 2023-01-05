@@ -25,9 +25,10 @@ fn main() -> Result<(), Error> {
                 }
                 let key = highgui::wait_key(10)?;
             }
-            Ok(())
         },
     )?;
 
     rclrs::spin(&node).map_err(|err| err.into())
+
+    Ok(())
 }
