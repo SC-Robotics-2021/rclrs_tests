@@ -2,6 +2,7 @@ use crate::utils::{
     image_encodings,
     image_encoding_ops,
 };
+use std_msgs::msg::Header;
 use sensor_msgs::msg::Image;
 use image::{DynamicImage, ImageBuffer, ExtendedColorType, GenericImageView};
 use opencv::prelude::*;

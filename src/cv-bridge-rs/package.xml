@@ -8,7 +8,9 @@
   <depend>byteorder</depend>
   <depend>image</depend>
   <depend>opencv</depend>
+  <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
+  
 
   <export>
     <build_type>ament_cargo</build_type>
