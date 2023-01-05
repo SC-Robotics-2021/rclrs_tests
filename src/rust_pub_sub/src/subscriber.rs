@@ -5,12 +5,13 @@ use anyhow::{Error, Result};
 
 fn main() -> Result<(), Error> {
     let context = rclrs::Context::new(env::args())?;
-
+    let window = "video capture";
+	highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
     let mut node = rclrs::create_node(&context, "rust_subscriber")?;
 
     let mut num_messages: usize = 0;
 
-    let _subscription = node.create_subscription::<sensor_msgs::msg::String, _>(
+    let _subscription = node.create_subscription::<sensor_msgs::msg::Image, _>(
         "topic",
         rclrs::QOS_PROFILE_DEFAULT,
         move |msg: sensor_msgs::msg::Image| {
@@ -18,14 +19,11 @@ fn main() -> Result<(), Error> {
             println!("(Got {} messages so far)", num_messages);
             let gui = false;
             if gui {
-                let mut frame = CvImage.from_imgmsg(frame).as_cvmat("bgr8");
+                let frame = CvImage::from_imgmsg(msg)::as_cvmat("bgr8");
                 if frame.size()?.width > 0 {
-                    highgui::imshow(window, &mut frame)?;
+                    highgui::imshow(window, frame)?;
                 }
                 let key = highgui::wait_key(10)?;
-                if key > 0 && key != 255 {
-                    break;
-                }
             }
             
         },

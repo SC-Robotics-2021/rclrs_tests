@@ -19,8 +19,8 @@ fn main() -> Result<(), Error> {
         println!("Publishing frame!");
 		let mut frame = Mat::default();
 		cam.read(&mut frame)?;
-        let msg = CvImage.from_cvmat(frame).into_imgmsg();
-        publisher.publish(&msg)?;
+        let msg = CvImage::from_cvmat(frame)::into_imgmsg();
+        publisher.publish(msg)?;
         std::thread::sleep(std::time::Duration::from_millis(500));
 	}
 
