@@ -11,8 +11,6 @@ fn main() -> Result<(), Error> {
     let publisher =
         node.create_publisher::<sensor_msgs::msg::Image>("topic", rclrs::QOS_PROFILE_DEFAULT)?;
 
-    let mut message = sensor_msgs::msg::Image::default();
-
     let mut publish_count: u32 = 0;
 
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
