@@ -1,12 +1,12 @@
 <package format="3">
-  <name>rust_pub_sub</name>
+  <name>cv_bridge</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="user@todo.todo">user</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>rclrs</depend>
-  <depend>cv_bridge</depend>
+  <depend>byteorder</depend>
+  <depend>image</depend>
   <depend>opencv</depend>
   <depend>sensor_msgs</depend>
 
