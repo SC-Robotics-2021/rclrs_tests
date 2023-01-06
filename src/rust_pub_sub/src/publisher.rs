@@ -17,8 +17,8 @@ fn main() -> Result<(), Error> {
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
     
     if !videoio::VideoCapture::is_opened(&cam)? {
-		    panic!("Unable to open default camera!");
-	  } 
+		Error
+	} 
     while context.ok() {
         publish_count += 1;
         println!("Publishing frame {}!", &publish_count);
