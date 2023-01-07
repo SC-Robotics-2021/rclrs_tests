@@ -21,20 +21,18 @@ fn main() -> Result<(), Error> {
     let context = rclrs::Context::new(env::args())?;        
     let camera_publisher = CameraPublisher::new(&context)?;
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
-    if !videoio::VideoCapture::is_opened(&cam)? {
-        Error
+    if videoio::VideoCapture::is_opened(&cam)? {
+        std::thread::spawn(move || -> Result<(), Error> {
+            loop {
+                println!("Publishing frame!");
+                let mut frame = Mat::default();
+                cam.read(&mut frame)?;
+                let msg = CvImage::from_cvmat(frame).into_imgmsg();
+                camera_publisher.publisher.publish(msg)?;
+                std::thread::sleep(std::time::Duration::from_millis(500));
+            }
+        });
+        rclrs::spin(&camera_publisher.node);
+        Ok(())
     }
-    std::thread::spawn(move || -> Result<(), Error> {
-        loop {
-            println!("Publishing frame!");
-            let mut frame = Mat::default();
-            cam.read(&mut frame)?;
-            let msg = CvImage::from_cvmat(frame).into_imgmsg();
-            camera_publisher.publisher.publish(msg)?;
-            std::thread::sleep(std::time::Duration::from_millis(500));
-        }
-    });
-    rclrs::spin(&camera_publisher.node);
-    Ok(())
-    
 }
