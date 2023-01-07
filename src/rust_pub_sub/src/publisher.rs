@@ -11,7 +11,7 @@ struct CameraPublisher {
 
 impl CameraPublisher {
     fn new(context: &rclrs::Context) -> Result<Self, Error> {
-        let mut node = rclrs::Node::new(context, "camera_subscriber")?;
+        let node = rclrs::Node::new(context, "camera_subscriber")?;
         let publisher = node.create_publisher::<Image>("topic", rclrs::QOS_PROFILE_DEFAULT)?;
         Ok(Self{node, publisher})
     }

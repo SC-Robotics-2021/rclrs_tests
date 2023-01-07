@@ -15,7 +15,8 @@ impl CameraSubscriber {
     fn new(context: &rclrs::Context) -> Result<Self, Error> {
         let node = rclrs::Node::new(context, "camera_subscriber")?;
         let gui = false;
-        let _subscription = node.create_subscription("topic", rclrs::QOS_PROFILE_DEFAULT,
+        let _subscription = {
+            node.create_subscription("topic", rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| -> Result<(), Error> {
                     println!("Recieving new image!");
                     if gui {
@@ -25,9 +26,9 @@ impl CameraSubscriber {
                         }
                         let key = highgui::wait_key(10)?;
                     }
-                    Ok(())
                 }
-            ).unwrap();
+            )?
+        };
         Ok(Self{node, _subscription, gui})
     }
 }
@@ -36,5 +37,6 @@ fn main() -> Result<(), Error> {
     let context = rclrs::Context::new(env::args())?;
     let camera_subscriber = CameraSubscriber::new(&context)?;
 	highgui::named_window("video capture", highgui::WINDOW_AUTOSIZE)?;
-    rclrs::spin(&camera_subscriber.node)?
+    rclrs::spin(&camera_subscriber.node)?;
+    Ok(())
 }
