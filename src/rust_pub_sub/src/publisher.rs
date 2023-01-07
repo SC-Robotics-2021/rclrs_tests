@@ -22,7 +22,7 @@ fn main() -> Result<(), Error> {
     let camera_publisher = CameraPublisher::new(&context)?;
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
     if !videoio::VideoCapture::is_opened(&cam)? {
-        Err(Error{inner: "Camera Failed to Open"})
+        Error
     }
     std::thread::spawn(move || -> Result<(), Error> {
         loop {
