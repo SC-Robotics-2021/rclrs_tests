@@ -19,7 +19,7 @@ impl CameraPublisher {
  
 fn main() -> Result<(), Error> {
     let context = rclrs::Context::new(env::args())?;        
-    let camera_subscriber = CameraPublisher::new(context)?;
+    let camera_publisher = CameraPublisher::new(&context)?;
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
     if !videoio::VideoCapture::is_opened(&cam)? {
         Error
@@ -30,9 +30,10 @@ fn main() -> Result<(), Error> {
             let mut frame = Mat::default();
             cam.read(&mut frame)?;
             let msg = CvImage::from_cvmat(frame).into_imgmsg();
-            camera_subscriber.publisher.publish(msg)?;
+            camera_publisher.publisher.publish(msg)?;
             std::thread::sleep(std::time::Duration::from_millis(500));
         }
     });
-    rclrs::spin(&camera_subscriber?.node)
+    rclrs::spin(&camera_publisher.node);
+    Ok(())
 }
