@@ -1,7 +1,7 @@
 use std::env;
 use opencv::{prelude::*, videoio};
 use cv_bridge::CvImage;
-use sensor_msgs::msgs::Image;
+use sensor_msgs::msg::Image;
 use anyhow::{Error, Result};
 
 struct CameraPublisher {
@@ -21,16 +21,18 @@ fn main() -> Result<(), Error> {
     let context = rclrs::Context::new(env::args())?;        
     let camera_subscriber = CameraPublisher::new(context)?;
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
-    if !videoio::VideoCapture::is_opened(&cam) {
-        Err(())
+    if !videoio::VideoCapture::is_opened(&cam)? {
+        Error
     }
-    while context.ok() {
-        println!("Publishing frame!");
-        let mut frame = Mat::default();
-        cam.read(&mut frame)?;
-        let msg = CvImage::from_cvmat(frame).into_imgmsg();
-        camera_subscriber.publisher.publish(msg)?;
-        std::thread::sleep(std::time::Duration::from_millis(500));
-	}
-    Ok(())
+    std::thread::spawn(move || -> Result<(), rclrs::RclrsError> {
+        loop {
+            println!("Publishing frame!");
+            let mut frame = Mat::default();
+            cam.read(&mut frame)?;
+            let msg = CvImage::from_cvmat(frame).into_imgmsg();
+            camera_subscriber.publisher.publish(msg)?;
+            std::thread::sleep(std::time::Duration::from_millis(500));
+        }
+    });
+    rclrs::spin(&camera_subscriber?.node)
 }
