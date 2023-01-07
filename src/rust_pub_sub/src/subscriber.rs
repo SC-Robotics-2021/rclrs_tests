@@ -1,7 +1,8 @@
 use std::env;
-use sensor_msgs::msg::Image
+use std::sync::Arc;
 use opencv::{highgui, prelude::*};
 use cv_bridge::CvImage;
+use sensor_msgs::msg::Image;
 use anyhow::{Error, Result};
 
 struct CameraSubscriber {
@@ -28,11 +29,11 @@ impl CameraSubscriber {
                     }
                 }
             )
-        },
+        };
         let gui = false;
         Ok(Self{node, _subscription, gui})
-    };
-};
+    }
+}
 
 fn main() -> Result<(), Error> {
     let context = rclrs::Context::new(env::args())?;
