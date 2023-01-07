@@ -15,11 +15,11 @@ impl CameraSubscriber {
     fn new(context: &rclrs::Context) -> Result<Self, Error> {
         let mut node = rclrs::Node::new(context, "camera_subscriber")?;
         let gui = false;
-        let _subscription = { // Create a new shared pointer instance that will be owned by the closure
+        let _subscription = Arc<{ // Create a new shared pointer instance that will be owned by the closure
             node.create_subscription(
                 "topic",
                 rclrs::QOS_PROFILE_DEFAULT,
-                move |msg: Image| {
+                move |msg: Image| -> Result<(), Error> {
                     println!("Recieving new image!");
                     if gui {
                         let frame = CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string());
@@ -28,10 +28,11 @@ impl CameraSubscriber {
                         }
                         let key = highgui::wait_key(10)?;
                     }
+                    Ok(())
                 }
             )
-        };
-        Ok(Self{node, Arc<_subscription>, gui})
+        }>;
+        Ok(Self{node, _subscription, gui})
     }
 }
 

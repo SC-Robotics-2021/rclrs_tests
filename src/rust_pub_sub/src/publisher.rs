@@ -22,9 +22,9 @@ fn main() -> Result<(), Error> {
     let camera_publisher = CameraPublisher::new(&context)?;
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
     if !videoio::VideoCapture::is_opened(&cam)? {
-        Error
+        Error{"Camera failed to open!"}
     }
-    std::thread::spawn(move || -> Result<(), rclrs::RclrsError> {
+    std::thread::spawn(move || -> Result<(), Error> {
         loop {
             println!("Publishing frame!");
             let mut frame = Mat::default();
