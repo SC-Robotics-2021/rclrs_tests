@@ -17,7 +17,7 @@ impl CameraSubscriber {
         let gui = false;
         let _subscription = {
             node.create_subscription("topic", rclrs::QOS_PROFILE_DEFAULT,
-                move |msg: Image| -> Result<(), Error> {
+                move |msg: Image| {
                     println!("Recieving new image!");
                     if gui {
                         let frame = CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string());
