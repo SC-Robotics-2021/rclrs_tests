@@ -13,7 +13,7 @@ struct CameraSubscriber {
 
 impl CameraSubscriber {
     fn new(context: &rclrs::Context) -> Result<Self, Error> {
-        let node = rclrs::Node::new(context, "camera_subscriber")?;
+        let mut node = rclrs::Node::new(context, "camera_subscriber")?;
         let gui = false;
         let _subscription = {
             node.create_subscription("topic", rclrs::QOS_PROFILE_DEFAULT,
