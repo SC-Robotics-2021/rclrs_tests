@@ -1,4 +1,5 @@
 use std::env;
+use std::sync::Arc;
 use opencv::{highgui, prelude::*};
 use cv_bridge::CvImage;
 use sensor_msgs::msg::Image;
@@ -6,13 +7,13 @@ use anyhow::{Error, Result};
 
 struct CameraSubscriber {
     node: rclrs::Node,
-    _subscription: rclrs::Subscription<Image>,
+    _subscription: Arc<rclrs::Subscription<Image>>,
     gui: bool
 }
 
 impl CameraSubscriber {
     fn new(context: &rclrs::Context) -> Result<Self, Error> {
-        let mut node = rclrs::Node::new(context, "camera_subscriber")?;
+        let node = rclrs::Node::new(context, "camera_subscriber")?;
         let gui = false;
         let _subscription = node.create_subscription("topic", rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| -> Result<(), Error> {
@@ -26,7 +27,7 @@ impl CameraSubscriber {
                     }
                     Ok(())
                 }
-            )
+            ).unwrap();
         Ok(Self{node, _subscription, gui})
     }
 }
