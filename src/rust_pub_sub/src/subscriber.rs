@@ -15,7 +15,7 @@ impl CameraSubscriber {
     fn new(context: &rclrs::Context) -> Result<Self, Error> {
         let mut node = rclrs::Node::new(context, "camera_subscriber")?;
         let gui = false;
-        let _subscription = Arc<{node.create_subscription("topic", rclrs::QOS_PROFILE_DEFAULT,
+        let _subscription = Arc<node.create_subscription("topic", rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| -> Result<(), Error> {
                     println!("Recieving new image!");
                     if gui {
