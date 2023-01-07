@@ -28,7 +28,7 @@ impl CameraSubscriber {
                     Ok(())
                 }
             )
-        );
+        ).unwrap();
         Ok(Self{node, _subscription, gui})
     }
 }
