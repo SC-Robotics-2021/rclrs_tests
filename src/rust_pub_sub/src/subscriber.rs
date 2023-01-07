@@ -21,7 +21,7 @@ impl CameraSubscriber {
                     println!("Recieving new image!");
                     if gui {
                         let frame = CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string());
-                        if frame.size().width > 0 {
+                        if frame.size().unwrap().width > 0 {
                             highgui::imshow("video capture", &frame);
                         }
                         let key = highgui::wait_key(10);
