@@ -17,7 +17,7 @@ fn main() -> Result<(), Error> {
     let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?;
     
     if !videoio::VideoCapture::is_opened(&cam)? {
-		Error
+		Err(Error)
 	} 
     while context.ok() {
         publish_count += 1;

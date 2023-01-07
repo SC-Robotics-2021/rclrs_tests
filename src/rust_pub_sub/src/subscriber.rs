@@ -1,5 +1,5 @@
 use std::env;
-use opencv::{highgui, prelude::*, videoio};
+use opencv::{highgui, prelude::*};
 use cv_bridge::CvImage;
 use anyhow::{Error, Result};
 
@@ -16,15 +16,16 @@ fn main() -> Result<(), Error> {
         rclrs::QOS_PROFILE_DEFAULT,
         move |msg: sensor_msgs::msg::Image| {
             num_messages += 1;
-            node.get_logger().info("(Got {} messages so far)", &num_messages);
+            printl!("(Got {} messages so far)", &num_messages);
             let gui = false;
             if gui {
                 let frame = CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string());
-                if frame.size()?.width > 0 {
+                if frame.size().width > 0 {
                     highgui::imshow(window, &frame);
                 }
                 let key = highgui::wait_key(10);
             }
+            Ok(())
         },
     )?;
 
