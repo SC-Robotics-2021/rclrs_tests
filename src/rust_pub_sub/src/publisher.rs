@@ -33,6 +33,6 @@ fn main() -> Result<(), Error> {
             }
         });
         rclrs::spin(&camera_publisher.node);
-        Ok(())
     }
+    Ok(())
 }
