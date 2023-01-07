@@ -35,6 +35,6 @@ fn main() -> Result<(), Error> {
     let context = rclrs::Context::new(env::args())?;
     let camera_subscriber = CameraSubscriber::new(&context)?;
 	highgui::named_window("video capture", highgui::WINDOW_AUTOSIZE)?;
-    rclrs::spin(&camera_subscriber.node)?;
+    rclrs::spin(&camera_subscriber.node)?
     Ok(())
 }

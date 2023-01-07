@@ -32,7 +32,7 @@ fn main() -> Result<(), Error> {
                 std::thread::sleep(std::time::Duration::from_millis(500));
             }
         });
-        rclrs::spin(&camera_publisher.node);
+        rclrs::spin(&camera_publisher.node)?
     }
     Ok(())
 }
