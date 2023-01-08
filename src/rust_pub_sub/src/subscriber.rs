@@ -1,35 +1,42 @@
 use std::env;
-use opencv::{highgui, prelude::*, videoio};
+use std::sync::Arc;
+use opencv::{highgui, prelude::*};
 use cv_bridge::CvImage;
+use sensor_msgs::msg::Image;
 use anyhow::{Error, Result};
+
+struct CameraSubscriber {
+    node: rclrs::Node,
+    _subscription: Arc<rclrs::Subscription<Image>>,
+    gui: bool
+}
+
+impl CameraSubscriber {
+    fn new(context: &rclrs::Context) -> Result<Self, Error> {
+        let mut node = rclrs::Node::new(context, "camera_subscriber")?;
+        let gui = false;
+        let _subscription = {
+            node.create_subscription("topic", rclrs::QOS_PROFILE_DEFAULT,
+                move |msg: Image| {
+                    println!("Recieving new image!");
+                    if gui {
+                        let frame = CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string());
+                        if frame.size().unwrap().width > 0 {
+                            highgui::imshow("video capture", &frame);
+                        }
+                        let key = highgui::wait_key(10);
+                    }
+                }
+            )?
+        };
+        Ok(Self{node, _subscription, gui})
+    }
+}
 
 fn main() -> Result<(), Error> {
     let context = rclrs::Context::new(env::args())?;
-    let window = "video capture";
-	highgui::named_window(window, highgui::WINDOW_AUTOSIZE)?;
-    let mut node = rclrs::create_node(&context, "rust_subscriber")?;
-
-    let mut num_messages: usize = 0;
-
-    let _subscription = node.create_subscription::<sensor_msgs::msg::Image, _>(
-        "topic",
-        rclrs::QOS_PROFILE_DEFAULT,
-        move |msg: sensor_msgs::msg::Image| {
-            num_messages += 1;
-            println!("(Got {} messages so far)", &num_messages);
-            let gui = false;
-            if gui {
-                let frame = CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string());
-                if frame.size()?.width > 0 {
-                    highgui::imshow(window, &frame)?;
-                }
-                let key = highgui::wait_key(10)?;
-            }
-            Ok(())
-        },
-    )?;
-
-    rclrs::spin(&node).map_err(|err| err.into())
-
+    let camera_subscriber = CameraSubscriber::new(&context)?;
+	highgui::named_window("video capture", highgui::WINDOW_AUTOSIZE)?;
+    rclrs::spin(&camera_subscriber.node)?;
     Ok(())
 }
