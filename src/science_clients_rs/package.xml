@@ -1,5 +1,5 @@
 <package format="3">
-  <name>rust_pub_sub</name>
+  <name>science_clients_rs</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="user@todo.todo">user</maintainer>
@@ -10,6 +10,11 @@
   <depend>cv_bridge</depend>
   <depend>opencv</depend>
   <depend>sensor_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>inflector</depend>
+  <depend>input_macro</depend>
+  <depend>colored</depend>
+
 
   <export>
     <build_type>ament_cargo</build_type>
