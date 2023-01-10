@@ -16,6 +16,7 @@
   <depend>Inflector</depend>
   <depend>input-macro</depend>
   <depend>colored</depend>
+  <depend>no-panic</depend
 
 
   <export>
