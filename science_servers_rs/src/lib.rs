@@ -6,16 +6,16 @@ use rppal::gpio::Gpio;
 use no_panic::no_panic;
 
 trait ServerNode {
-    node: rclrs::Node;
-    _subsystem: String;
-    _device: String;
-    _server: Arc<rclrs::Server<_>>;
-    fn new() -> Result<Self, Error>; 
+    node: rclrs::Node,
+    _subsystem: String,
+    _device: String,
+    _server: Arc<rclrs::Server<_>>,
+    fn new() -> Result<Self, Error>,
 }
 
 trait ServerExecution {
     #[no_panic]
-    fn run(&self);
+    fn run(&self),
 }
 
 pub struct GPIOServer {
@@ -60,10 +60,10 @@ impl ServerNode for GPIOServer {
 }
 
 pub struct CameraServer {
-    _publisher: Arc<rclrs::Publisher<Image>>;
-    _cam: videoio::VideoCapture;
-    _capture_delay: u8;
-    _active: Arc<Mutex<bool>>;
+    _publisher: Arc<rclrs::Publisher<Image>>,
+    _cam: videoio::VideoCapture,
+    _capture_delay: u8,
+    _active: Arc<Mutex<bool>>,
 }
 
 impl ServerExecution for CameraServer {
@@ -101,11 +101,9 @@ impl ServerNode for CameraServer {
         let _server = {
             node.create_subscription(format!("/{&subsystem}/{&device}/cmd"),
                 move |_request_header: &rclrs::rmw_request_id_t, request: SetBool.Request| -> SetBool.Response {
-                    active = *active_clone.lock().unwrap()
-                    if request.data == active {
-                        SetBool.Response {success: false, message: "Already in requested state" }
-                    }
+                    *active_clone.lock().unwrap() = request.data;
                     if request.data {
+                        active
                         SetBool_Response {success: true, message: format!("{&self._device} is now on.") }
                     }
                     SetBool.Response {success: true, message: format!("{&self._device} is now off.") }
@@ -319,7 +317,6 @@ impl ServerNode for StepperMotorServer {
         };
         let _subsystem = subsystem;
         let _device = str.replace($device, '_', ' ');
-        let _active = active;
         // Zero the platform's height
         TicDriver.set_current_limit(3200);
         TicDriver.set_current_limit(TicStepMode::Microstep256);
@@ -336,6 +333,6 @@ impl ServerNode for StepperMotorServer {
         TicDriver.halt_and_set_position(0);
         TicDriver.deenergize();
         TicDriver.enter_safe_start();
-        Ok(Self{node, _subsystem, _device, _server, _active})
+        Ok(Self{node, _subsystem, _device, _server})
     }
 }

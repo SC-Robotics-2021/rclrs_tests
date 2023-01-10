@@ -12,15 +12,15 @@ use science_interfaces_rs::srv::Position;
 use no_panic::no_panic;
 
 trait ClientNode {
-    node: rclrs::Node;
-    _subsystem: String;
-    _device: String;
-    _client: Arc<rclrs::Client<_>>;
+    _node: rclrs::Node,
+    _subsystem: String,
+    _device: String,
+    _client: Arc<rclrs::Client<_>>,
 }
 
 trait ClientExecution {
-    fn send_request(&self);
-    fn cli_control{&self};
+    fn send_request(&self),
+    fn cli_control(&self),
 }
 
 pub struct OnOffClient {}
@@ -37,8 +37,8 @@ impl ClientNode for OnOffClient {
 }
 
 pub struct CameraClient {
-    _subscription: Arc<rclrs::Subscription<Image>>;
-    frame: Arc<Mutex<Option<CvImage>>>;
+    _subscription: Arc<rclrs::Subscription<Image>>,
+    frame: Arc<Mutex<Option<CvImage>>>,
 }
 
 impl ClientNode for CameraClient {
@@ -66,56 +66,62 @@ impl ClientNode for CameraClient {
     }
 }
 
-impl ClientExecution for OnOffClient, CameraClient {
-    #[no_panic]
-    fn send_request(&self, state: bool) {
-        while not node._client.wait_for_service(timeout_sec=1.0) {
-            println!(format!("{&node._device.to_sentence_case()} not available. Waiting..."))
-        }
-        let request = SetBool{data: state};
-        let future = node._client.call_async(&request);
-        println!("Request sent to {&self._device}")
-        while rclrs.ok() {
-            if future.done() {
-                match future.result() {
-                    Ok(SetBool.Response) => { println!(format!("{&node._device.to_sentence_case()} is now {
-                        match request.data {
-                            true => { 'on' }
-                            false => { 'off' }
+macro_rules! impl_ClientExecution {
+    ($($t:ty),+) => {
+        $(impl ClientExecution for $t {
+            #[no_panic]
+            fn send_request(&self, state: bool) {
+                while not node._client.wait_for_service(timeout_sec=1.0) {
+                    println!(format!("{&node._device.to_sentence_case()} not available. Waiting..."))
+                }
+                let request = SetBool{data: state};
+                let future = node._client.call_async(&request);
+                println!("Request sent to {&self._device}")
+                while rclrs.ok() {
+                    if future.done() {
+                        match future.result() {
+                            Ok(SetBool.Response) => { println!(format!("{&node._device.to_sentence_case()} is now {
+                                match request.data {
+                                    true => { 'on' }
+                                    false => { 'off' }
+                                }
+                            }."));}
+                            Error => { println!(format!("Request failed! {&node._device.to_sentence_case()} already in requested state.")); }
                         }
-                    }."));}
-                    Error => { println!(format!("Request failed! {&node._device.to_sentence_case()} already in requested state.")); }
-                }
-                break;
-            }
-        }
-    }
-
-    #[no_panic]
-    fn cli_control(&self) -> Result<(), Error> {
-        std::thread::spawn(move || -> Result<(), Error> {
-            rclrs::spin(&self.node)?;
-        });
-        let mut proceed: bool = true;
-        while proceed {
-            let mut state : bool = input!(format!("Enter a command for the {&self._device} ({'on => true'.bold().blue()} | {'off => false'.bold().red()}): ")).trim().to_lowercase().parse().unwrap();
-            loop {
-                match state {
-                    Ok(bool) => { break; }
-                    Error => { input!(format!("Invalid input. Try again: ")).trim().to_lowercase().parse().unwrap(); }
-                }
-                self.send_request(&state)
-            }
-            proceed = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse().unwrap();
-            loop {
-                match proceed {
-                    Ok(bool) => { break; }
-                    Error => { proceed = input!(format!("Invalid input. Try again: ")).trim().to_lowercase().parse().unwrap(); }
+                        break;
+                    }
                 }
             }
-        }
+        
+            #[no_panic]
+            fn cli_control(&self) -> Result<(), Error> {
+                std::thread::spawn(move || -> Result<(), Error> {
+                    rclrs::spin(&self.node)?;
+                });
+                let mut proceed: bool = true;
+                while proceed {
+                    let mut state : bool = input!(format!("Enter a command for the {&self._device} ({'on => true'.bold().blue()} | {'off => false'.bold().red()}): ")).trim().to_lowercase().parse().unwrap();
+                    loop {
+                        match state {
+                            Ok(bool) => { break; }
+                            Error => { input!(format!("Invalid input. Try again: ")).trim().to_lowercase().parse().unwrap(); }
+                        }
+                        self.send_request(&state)
+                    }
+                    proceed = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse().unwrap();
+                    loop {
+                        match proceed {
+                            Ok(bool) => { break; }
+                            Error => { proceed = input!(format!("Invalid input. Try again: ")).trim().to_lowercase().parse().unwrap(); }
+                        }
+                    }
+                }
+            }
+        })+
     }
 }
+
+impl_ClientExecution!(OnOffClient, CameraClient);
 
 pub struct PositionClient {}
 
