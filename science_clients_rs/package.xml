@@ -13,7 +13,7 @@
   <depend>opencv</depend>
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>inflector</depend>
+  <depend>Inflector</depend>
   <depend>input_macro</depend>
   <depend>colored</depend>
 
