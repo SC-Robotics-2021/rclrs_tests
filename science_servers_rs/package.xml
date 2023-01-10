@@ -14,7 +14,7 @@
   <depend>std_srvs</depend>
   <depend>colored</depend>
   <depend>Inflector</depend>
-  <depend>input_macro</depend>
+  <depend>input-macro</depend>
   <depend>no_panic</depend>
 
 
