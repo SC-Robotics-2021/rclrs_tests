@@ -31,7 +31,7 @@ impl ClientNode for OnOffClient {
         let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
         let _client = _node.create_client::<SetBool>(format!("/{&subsystem}/{$device}/cmd"))?;
         let _subsystem = subsystem;
-        let _device = str.replace($device, '_', ' ');
+        let _device = str.replace(format!("{$device}"), "_", " ");
         Ok(Self{_node, _subsystem, _device, _client})
     }
 }
@@ -61,7 +61,7 @@ impl ClientNode for CameraClient {
             )?
         };
         let _subsystem = subsystem;
-        let _device = str.replace($device, '_', ' ');
+        let _device = str.replace(format!("{$device}"), "_", " ");
         Ok(Self{_node, _subsystem, _device, _client, _subscription})
     }
 }
@@ -131,7 +131,7 @@ impl ClientNode for PositionClient {
         let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
         let _client = _node.create_client::<Position>(format!("/{&subsystem}/{$device}/cmd"))?;
         let _subsystem = subsystem;
-        let _device = str.replace($device, '_', ' ');
+        let _device = str.replace(format!("{$device}"), "_", " ");
         Ok(Self{_node, _subsystem, _device, _client})
     }
 }

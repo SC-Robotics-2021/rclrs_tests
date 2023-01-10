@@ -54,7 +54,7 @@ impl ServerNode for GPIOServer {
             })?
         };
         let _subsystem = subsystem;
-        let _device = str.replace($device, '_', ' ');
+        let _device = str.replace(format!("{$device}"), "_", " ");
         Ok(Self{_node, _subsystem, _device, _server})
     }
 }
@@ -115,7 +115,7 @@ impl ServerNode for CameraServer {
         _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height);
         let _capture_delay = capture_delay; 
         let _subsystem = subsystem;
-        let _device = str.replace($device, '_', ' ');
+        let _device = str.replace(format!("{$device}"), "_", " ");
         Ok(Self{node, _subsystem, _device, _server, _publisher, _cam, _capture_delay, _active})
     }
 }
@@ -316,7 +316,7 @@ impl ServerNode for StepperMotorServer {
             )?
         };
         let _subsystem = subsystem;
-        let _device = str.replace($device, '_', ' ');
+        let _device = str.replace(format!("{$device}"), "_", " ");
         // Zero the platform's height
         TicDriver.set_current_limit(3200);
         TicDriver.set_current_limit(TicStepMode::Microstep256);
