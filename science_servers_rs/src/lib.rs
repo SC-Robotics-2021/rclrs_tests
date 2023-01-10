@@ -1,5 +1,5 @@
 use std::{sync::Arc, thread, time};
-use science_interfaces::srv::Position;
+use science_interfaces_rs::srv::Position;
 use opencv::{prelude::*, highgui, videoio};
 use std_srvs::srv::SetBool;
 use rppal::gpio::Gpio;
