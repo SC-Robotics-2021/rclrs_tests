@@ -28,11 +28,11 @@ pub struct OnOffClient {}
 impl ClientNode for OnOffClient {
     #[no_panic]
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
-        let _client = node.create_client::<SetBool>(format!("/{&subsystem}/{$device}/cmd"))?;
+        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
+        let _client = _node.create_client::<SetBool>(format!("/{&subsystem}/{$device}/cmd"))?;
         let _subsystem = subsystem;
         let _device = str.replace($device, '_', ' ');
-        Ok(Self{node, _subsystem, _device, _client})
+        Ok(Self{_node, _subsystem, _device, _client})
     }
 }
 
@@ -44,12 +44,12 @@ pub struct CameraClient {
 impl ClientNode for CameraClient {
     #[no_panic]
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
-        let frame = Arc::new(Mutex::new(None));
+        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
+        let _frame = Arc::new(Mutex::new(None));
         let frame_cb = Arc::clone(&frame);
-        let _client = node.create_client::<SetBool>(format!("/{&subsystem}/{&device}/cmd"))?;
+        let _client = _node.create_client::<SetBool>(format!("/{&subsystem}/{&device}/cmd"))?;
         let _subscription = {
-            node.create_subscription(format!("/{&subsystem}/{$device}/images"), rclrs::QOS_PROFILE_DEFAULT,
+            _node.create_subscription(format!("/{&subsystem}/{$device}/images"), rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| {
                     println!(format!("Recieving new {str.replace($device, '_', ' ')} image!"));
                    *frame.lock.unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
@@ -62,7 +62,7 @@ impl ClientNode for CameraClient {
         };
         let _subsystem = subsystem;
         let _device = str.replace($device, '_', ' ');
-        Ok(Self{node, _subsystem, _device, _client, _subscription})
+        Ok(Self{_node, _subsystem, _device, _client, _subscription})
     }
 }
 
@@ -71,22 +71,22 @@ macro_rules! impl_ClientExecution {
         $(impl ClientExecution for $t {
             #[no_panic]
             fn send_request(&self, state: bool) {
-                while not node._client.wait_for_service(timeout_sec=1.0) {
-                    println!(format!("{&node._device.to_sentence_case()} not available. Waiting..."))
+                while !_node._client.wait_for_service(timeout_sec=1.0) {
+                    println!(format!("{&_node._device.to_sentence_case()} not available. Waiting..."))
                 }
                 let request = SetBool{data: state};
-                let future = node._client.call_async(&request);
+                let future = _node._client.call_async(&request);
                 println!("Request sent to {&self._device}")
                 while rclrs.ok() {
                     if future.done() {
                         match future.result() {
-                            Ok(SetBool.Response) => { println!(format!("{&node._device.to_sentence_case()} is now {
+                            Ok(SetBool.Response) => { println!(format!("{&_node._device.to_sentence_case()} is now {
                                 match request.data {
                                     true => { 'on' }
                                     false => { 'off' }
                                 }
                             }."));}
-                            Error => { println!(format!("Request failed! {&node._device.to_sentence_case()} already in requested state.")); }
+                            Error => { println!(format!("Request failed! {&_node._device.to_sentence_case()} already in requested state.")); }
                         }
                         break;
                     }
@@ -96,7 +96,7 @@ macro_rules! impl_ClientExecution {
             #[no_panic]
             fn cli_control(&self) -> Result<(), Error> {
                 std::thread::spawn(move || -> Result<(), Error> {
-                    rclrs::spin(&self.node)?;
+                    rclrs::spin(&self._node)?;
                 });
                 let mut proceed: bool = true;
                 while proceed {
@@ -128,22 +128,22 @@ pub struct PositionClient {}
 impl ClientNode for PositionClient {
     #[no_panic]
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
-        let _client = node.create_client::<Position>(format!("/{&subsystem}/{$device}/cmd"))?;
+        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
+        let _client = _node.create_client::<Position>(format!("/{&subsystem}/{$device}/cmd"))?;
         let _subsystem = subsystem;
         let _device = str.replace($device, '_', ' ');
-        Ok(Self{node, _subsystem, _device, _client})
+        Ok(Self{_node, _subsystem, _device, _client})
     }
 }
 
 impl ClientExecution for PositionClient {
     #[no_panic]
     fn send_request(&self, position: i32) {
-        while not node._client.wait_for_service(timeout_sec=1.0) {
+        while not _node._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("{&self._device} not available. Waiting..."))
         }
         let request = Position.Request{position: position};
-        let future = node._client.call_async(&request);
+        let future = _node._client.call_async(&request);
         println!("Request sent to {&self._device}.")
         while rclrs.ok() {
             if future.done() {
@@ -160,7 +160,7 @@ impl ClientExecution for PositionClient {
     #[no_panic]
     fn cli_control(&self) {
         std::thread::spawn(move || -> Result<(), Error> {
-            rclrs::spin(&self.node)?;
+            rclrs::spin(&self._node)?;
         });
         let mut proceed: bool = true;
         let mut position: i32;

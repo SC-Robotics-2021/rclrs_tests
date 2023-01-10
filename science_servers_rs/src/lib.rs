@@ -6,7 +6,7 @@ use rppal::gpio::Gpio;
 use no_panic::no_panic;
 
 trait ServerNode {
-    node: rclrs::Node,
+    _node: rclrs::Node,
     _subsystem: String,
     _device: String,
     _server: Arc<rclrs::Server<_>>,
@@ -26,7 +26,7 @@ impl ServerExecution for GPIOServer {
     #[no_panic]
     fn run(&self) {
         loop {
-            let process = rclrs::spin(&self.node)?;
+            let process = rclrs::spin(&self._node)?;
             match process {
                 Ok(_) => { break; }
                 Error => {}
@@ -38,11 +38,11 @@ impl ServerExecution for GPIOServer {
 impl ServerNode for GPIOServer {
     #[no_panic]
     fn new(&self, subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
-        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_server"))?;
+        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_server"))?;
         let _pin = Arc::new(Mutex::new(Gpio::new()?.get(pin_num)?.into_output_low()));
         let pin_clone =  Arc::clone(&_pin);
         let _server = {
-            node.create_subscription(format!("/{&subsystem}/{&device}/cmd"),
+            _node.create_subscription(format!("/{&subsystem}/{&device}/cmd"),
                 move |_request_header: &rclrs::rmw_request_id_t, request: SetBool.Request| -> SetBool.Response {
                     pin = *pin_clone.lock().unwrap()
                     if request.data {
@@ -55,7 +55,7 @@ impl ServerNode for GPIOServer {
         };
         let _subsystem = subsystem;
         let _device = str.replace($device, '_', ' ');
-        Ok(Self{node, _subsystem, _device, _server})
+        Ok(Self{_node, _subsystem, _device, _server})
     }
 }
 
@@ -83,7 +83,7 @@ impl ServerExecution for CameraServer {
                     }
                 }
             });
-            let process = rclrs::spin(&self.node)?;
+            let process = rclrs::spin(&self._node)?;
             match process { // this match statement will catch an error and rerun the node in the event it crashes
                 Ok(_) => { break; },
                 Error => {}
@@ -99,7 +99,7 @@ impl ServerNode for CameraServer {
         let _active = Arc::new(Mutex::(false));
         let active_clone =  Arc::clone(&active);
         let _server = {
-            node.create_subscription(format!("/{&subsystem}/{&device}/cmd"),
+            _node.create_subscription(format!("/{&subsystem}/{&device}/cmd"),
                 move |_request_header: &rclrs::rmw_request_id_t, request: SetBool.Request| -> SetBool.Response {
                     *active_clone.lock().unwrap() = request.data;
                     if request.data {
@@ -109,7 +109,7 @@ impl ServerNode for CameraServer {
                     SetBool.Response {success: true, message: format!("{&self._device} is now off.") }
             })?
         };
-        let _publisher = node.create_publisher(format!("/{&subsystem}/{&device}/images"), rclrs::QOS_PROFILE_DEFAULT)?;
+        let _publisher = _node.create_publisher(format!("/{&subsystem}/{&device}/images"), rclrs::QOS_PROFILE_DEFAULT)?;
         let _cam = videoio::VideoCapture(camera_num)?;
         _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width);
         _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height);
@@ -264,7 +264,7 @@ impl ServerExecution for StepperMotorServer {
     #[no_panic]
     fn run(&self) {
         loop {
-            let process = rclrs::spin(&self.node)?;
+            let process = rclrs::spin(&self._node)?;
             match process {
                 Ok(_) => { break; }
                 Error => {}
@@ -278,7 +278,7 @@ impl ServerNode for StepperMotorServer {
     fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
         let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_server"))?;
         let _server = {
-            node.create_subscription(format!("/{&subsystem}/{&device}/cmd"),
+            _node.create_subscription(format!("/{&subsystem}/{&device}/cmd"),
                 move |_request_header: &rclrs::rmw_request_id_t, request: Position.Request| -> Position.Response {
                     let requested_displacement: i32 = request.position-TicDriver.get_current_position()?;
                     match requested_displacement {
