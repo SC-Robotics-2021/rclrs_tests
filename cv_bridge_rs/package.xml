@@ -1,5 +1,5 @@
 <package format="3">
-  <name>cv_bridge</name>
+  <name>cv_bridge_rs</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="user@todo.todo">user</maintainer>

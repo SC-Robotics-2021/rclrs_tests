@@ -7,30 +7,31 @@ use colored::Colorize;
 use opencv::{highgui, prelude::*};
 use cv_bridge::CvImage;
 use std_srvs::srv::SetBool;
-use sensor_msgs::msg::Image as ImageMsg;
+use sensor_msgs::msg::Image;
+use science_interfaces::srv::Position;
 
 pub struct PositionClient {}
 pub struct OnOffClient {}
 pub struct CameraClient {
-    _subscription: Arc<rclrs::Subscription<ImageMsg>>;
+    _subscription: Arc<rclrs::Subscription<Image>>;
     frame: Arc<Mutex<Option<CvImage>>>;
 }
 
-pub trait ClientNode {
+trait ClientNode {
     node: rclrs::Node;
     _subsystem: String;
     _device: String;
-    _client: Arc<rclrs::Client<SetBool>>;
+    _client: Arc<rclrs::Client<_>>;
 }
 
-pub trait ClientExecution {
+trait ClientExecution {
     fn send_request(&self);
     fn cli_control{&self};
 }
 
-pub impl ClientNode for PositionClient, OnOffClient {
+impl ClientNode for OnOffClient {
     fn new(subsystem, device) -> Result<Self, Error> {
-        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_subscriber"))?;
+        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
         let _client = node.create_client::<SetBool>(format!("/{&subsystem}/{$device}/cmd"))?;
         let _subsystem = subsystem;
         let _device = str.replace($device, '_', ' ');
@@ -38,15 +39,15 @@ pub impl ClientNode for PositionClient, OnOffClient {
     }
 }
 
-pub impl ClientNode for OnOffClient {
+impl ClientNode for OnOffClient {
     fn new(subsystem, device) -> Result<Self, Error> {
-        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_subscriber"))?;
+        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
         let frame = Arc::new(Mutex::new(None));
         let frame_cb = Arc::clone(&frame);
         let _client = node.create_client::<SetBool>(format!("/{&subsystem}/{&device}/cmd"))?;
         let _subscription = {
             node.create_subscription(format!("/{&subsystem}/{$device}/images"), rclrs::QOS_PROFILE_DEFAULT,
-                move |msg: ImageMsg| {
+                move |msg: Image| {
                     println!(format!("Recieving new {str.replace($device, '_', ' ')} image!"));
                    *frame.lock.unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
                     if *frame.lock.unwrap().size().unwrap().width > 0 {
@@ -62,7 +63,7 @@ pub impl ClientNode for OnOffClient {
     }
 }
 
-pub impl ClientExecution for PositionClient {
+impl ClientExecution for PositionClient {
     fn send_request(&self, position) {
         while not node._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("{&self._device} not available. Waiting..."))
@@ -74,7 +75,7 @@ pub impl ClientExecution for PositionClient {
             if future.done() {
                 let response = future.result()
                 match response {
-                    Ok(()) => { println!(format!("{&self._device} is now at position {request}.")); },
+                    Ok(()) => { println!(format!("{&self._device} is now at position {&request}.")); },
                     Error => { println!(format!("Request failed: {&response.message}")); }
                 }
                 break;
@@ -109,7 +110,7 @@ pub impl ClientExecution for PositionClient {
     }
 }
 
-pub impl ClientExecution for OnOffClient, CameraClient {
+impl ClientExecution for OnOffClient, CameraClient {
     fn send_request(&self, command) {
         while not node._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("{&node._device.to_sentence_case()} not available. Waiting..."))

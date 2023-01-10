@@ -1,5 +1,5 @@
 [package]
-name = "cv_bridge"
+name = "cv_bridge_rs"
 version = "0.2.0"
 edition = "2021"
 authors = ["Omkar Kabadagi <kabadagiomkar@gmail.com>"]
