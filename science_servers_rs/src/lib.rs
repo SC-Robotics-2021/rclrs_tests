@@ -28,7 +28,7 @@ impl ServerExecution for GPIOServer {
         loop {
             let process = rclrs::spin(&self.node)?;
             match process {
-                Ok(()) => { break; }
+                Ok(_) => { break; }
                 Error => {}
             }
         }
@@ -37,7 +37,7 @@ impl ServerExecution for GPIOServer {
 
 impl ServerNode for GPIOServer {
     #[no_panic]
-    fn new(&self, subsystem, device, pin_num) -> Result<Self, Error> {
+    fn new(&self, subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
         let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_server"))?;
         let _pin = Arc::new(Mutex::new(Gpio::new()?.get(pin_num)?.into_output_low()));
         let pin_clone =  Arc::clone(&_pin);
@@ -54,7 +54,7 @@ impl ServerNode for GPIOServer {
             })?
         };
         let _subsystem = subsystem;
-        let _device = device;
+        let _device = str.replace($device, '_', ' ');
         Ok(Self{node, _subsystem, _device, _server})
     }
 }
@@ -85,7 +85,7 @@ impl ServerExecution for CameraServer {
             });
             let process = rclrs::spin(&self.node)?;
             match process { // this match statement will catch an error and rerun the node in the event it crashes
-                Ok(()) => { break; },
+                Ok(_) => { break; },
                 Error => {}
             }
         }
@@ -94,7 +94,7 @@ impl ServerExecution for CameraServer {
 
 impl ServerNode for CameraServer {
     #[no_panic]
-    fn new(&self, subsystem, device, camera_num, frame_width, frame_height, capture_delay) -> Result<Self, Error> { // capture delay is in milliseconds
+    fn new(&self, subsystem: String, device: String, camera_num: String, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
         let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_server"))?;
         let _active = Arc::new(Mutex::(false));
         let active_clone =  Arc::clone(&active);
@@ -117,7 +117,7 @@ impl ServerNode for CameraServer {
         _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height);
         let _capture_delay = capture_delay; 
         let _subsystem = subsystem;
-        let _device = device;
+        let _device = str.replace($device, '_', ' ');
         Ok(Self{node, _subsystem, _device, _server, _publisher, _cam, _capture_delay, _active})
     }
 }
@@ -277,7 +277,7 @@ impl ServerExecution for StepperMotorServer {
 
 impl ServerNode for StepperMotorServer {
     #[no_panic]
-    fn new(&self, subsystem, device) -> Result<Self, Error> {
+    fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
         let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_server"))?;
         let _server = {
             node.create_subscription(format!("/{&subsystem}/{&device}/cmd"),
@@ -318,7 +318,7 @@ impl ServerNode for StepperMotorServer {
             )?
         };
         let _subsystem = subsystem;
-        let _device = device;
+        let _device = str.replace($device, '_', ' ');
         let _active = active;
         // Zero the platform's height
         TicDriver.set_current_limit(3200);
