@@ -3,12 +3,14 @@ use science_interfaces_rs::srv::Position;
 use opencv::{prelude::*, highgui, videoio};
 use std_srvs::srv::SetBool;
 use rppal::gpio::Gpio;
+use no_panic::no_panic;
 
 trait ServerNode {
     node: rclrs::Node;
     _subsystem: String;
     _device: String;
     _server: Arc<rclrs::Server<_>>;
+    fn new() -> Result<Self, Error>; 
 }
 
 trait ServerExecution {
@@ -93,7 +95,7 @@ impl ServerExecution for CameraServer {
 
 impl ServerNode for CameraServer {
     #[no_panic]
-    fn new(&self, subsystem, device, camera_num, frame_width, frame_height, capture_delay) { // capture delay is in milliseconds
+    fn new(&self, subsystem, device, camera_num, frame_width, frame_height, capture_delay) -> Result<Self, Error> { // capture delay is in milliseconds
         let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_server"))?;
         let _active = Arc::new(Mutex::(false));
         let active_clone =  Arc::clone(&active);
@@ -276,7 +278,7 @@ impl ServerExecution for StepperMotorServer {
 
 impl ServerNode for StepperMotorServer {
     #[no_panic]
-    fn new(&self, subsystem, device) -> Result<(), Error> {
+    fn new(&self, subsystem, device) -> Result<Self, Error> {
         let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_server"))?;
         let _server = {
             node.create_subscription(format!("/{&subsystem}/{&device}/cmd"),

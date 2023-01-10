@@ -9,6 +9,7 @@ use cv_bridge::CvImage;
 use std_srvs::srv::SetBool;
 use sensor_msgs::msg::Image;
 use science_interfaces_rs::srv::Position;
+use no_panic::no_panic;
 
 pub struct PositionClient {}
 pub struct OnOffClient {}
