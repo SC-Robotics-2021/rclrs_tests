@@ -5,6 +5,7 @@
   <maintainer email="user@todo.todo">user</maintainer>
   <license>TODO: License declaration</license>
 
+  <exec_depend>science_interfaces</exec_depend>
   <depend>anyhow</depend>
   <depend>rclrs</depend>
   <depend>cv_bridge</depend>
@@ -12,6 +13,9 @@
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
   <depend>colored</depend>
+  <depend>inflector</depend>
+  <depend>input_macro</depend>
+  <depend>no_panic</depend>
 
 
   <export>

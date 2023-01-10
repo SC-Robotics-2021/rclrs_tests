@@ -4,6 +4,8 @@
   <description>TODO: Package description</description>
   <maintainer email="user@todo.todo">user</maintainer>
   <license>TODO: License declaration</license>
+  
+  <exec_depend>science_interfaces_rs</exec_depend>
 
   <depend>anyhow</depend>
   <depend>rclrs</depend>
