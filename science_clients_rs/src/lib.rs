@@ -11,13 +11,6 @@ use sensor_msgs::msg::Image;
 use science_interfaces_rs::srv::Position;
 use no_panic::no_panic;
 
-pub struct PositionClient {}
-pub struct OnOffClient {}
-pub struct CameraClient {
-    _subscription: Arc<rclrs::Subscription<Image>>;
-    frame: Arc<Mutex<Option<CvImage>>>;
-}
-
 trait ClientNode {
     node: rclrs::Node;
     _subsystem: String;
@@ -30,6 +23,8 @@ trait ClientExecution {
     fn cli_control{&self};
 }
 
+pub struct OnOffClient {}
+
 impl ClientNode for OnOffClient {
     #[no_panic]
     fn new(subsystem, device) -> Result<Self, Error> {
@@ -41,7 +36,12 @@ impl ClientNode for OnOffClient {
     }
 }
 
-impl ClientNode for OnOffClient {
+pub struct CameraClient {
+    _subscription: Arc<rclrs::Subscription<Image>>;
+    frame: Arc<Mutex<Option<CvImage>>>;
+}
+
+impl ClientNode for CameraClient {
     #[no_panic]
     fn new(subsystem, device) -> Result<Self, Error> {
         let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
@@ -66,55 +66,6 @@ impl ClientNode for OnOffClient {
     }
 }
 
-impl ClientExecution for PositionClient {
-    #[no_panic]
-    fn send_request(&self, position) {
-        while not node._client.wait_for_service(timeout_sec=1.0) {
-            println!(format!("{&self._device} not available. Waiting..."))
-        }
-        let request = SetBool{data: position};
-        let future = node._client.call_async(&request);
-        println!("Request sent to {&self._device}.")
-        while rclrs.ok() {
-            if future.done() {
-                let response = future.result()
-                match response {
-                    Ok(()) => { println!(format!("{&self._device} is now at position {&request}.")); },
-                    Error => { println!(format!("Request failed: {&response.message}")); }
-                }
-                break;
-            }
-        }
-    }
-
-    #[no_panic]
-    fn cli_control(&self) {
-        std::thread::spawn(move || -> Result<(), Error> {
-            rclrs::spin(&self.node)?;
-        });
-        let mut proceed: bool = true;
-        while proceed {
-            let mut position: u8 = input!(format!("Enter an integer position value ({'minimum => 0'.bold().blue()} | {'maximum => 255'.bold().red()}): ")).trim().to_lowercase().parse().unwrap();
-            loop {
-                match position {
-                    Ok(()) => { break; }
-                    Error => { input!(format!("Invalid input. Try again: ")).trim().to_lowercase().parse().unwrap(); }
-                }
-            }
-            let request = {}
-            self.send_request(&position)
-
-            let proceed: bool = input!(format!("If you would like to continue inputing commands, type true, otherwise type false.")).trim().to_lowercase().parse().unwrap();
-            loop {
-                match proceed {
-                    Ok(()) => { break; }
-                    Error => { proceed = input!(format!("Invalid input. Try again: ")).trim().to_lowercase().parse().unwrap(); }
-                }
-            }
-        }
-    }
-}
-
 impl ClientExecution for OnOffClient, CameraClient {
     #[no_panic]
     fn send_request(&self, command) {
@@ -127,7 +78,7 @@ impl ClientExecution for OnOffClient, CameraClient {
         while rclrs.ok() {
             if future.done() {
                 match future.result() {
-                    Ok(()) => { println!(format!("{&node._device.to_sentence_case()} is now {
+                    Ok(_) => { println!(format!("{&node._device.to_sentence_case()} is now {
                         match request.data {
                             true => { 'on' }
                             false => { 'off' }
@@ -155,10 +106,63 @@ impl ClientExecution for OnOffClient, CameraClient {
                 }
                 self.send_request(&state)
             }
-            let proceed: bool = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse().unwrap();
+            proceed = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse().unwrap();
             loop {
                 match proceed {
-                    Ok(()) => { break; }
+                    Ok(bool) => { break; }
+                    Error => { proceed = input!(format!("Invalid input. Try again: ")).trim().to_lowercase().parse().unwrap(); }
+                }
+            }
+        }
+    }
+}
+
+pub struct PositionClient {}
+
+impl ClientExecution for PositionClient {
+    #[no_panic]
+    fn send_request(&self, position: i32) {
+        while not node._client.wait_for_service(timeout_sec=1.0) {
+            println!(format!("{&self._device} not available. Waiting..."))
+        }
+        let request = SetBool{data: position};
+        let future = node._client.call_async(&request);
+        println!("Request sent to {&self._device}.")
+        while rclrs.ok() {
+            if future.done() {
+                let response = future.result()
+                match response {
+                    Ok(Position.Response) => { println!(format!("{&self._device} is now at position {&response.position}.")); },
+                    Error => { println!(format!("Request failed: {&response.error}")); }
+                }
+                break;
+            }
+        }
+    }
+
+    #[no_panic]
+    fn cli_control(&self) {
+        std::thread::spawn(move || -> Result<(), Error> {
+            rclrs::spin(&self.node)?;
+        });
+        let mut proceed: bool = true;
+        while proceed {
+            let mut position: i32 = input!(format!("Enter an integer position value ({'minimum => 0'.bold().blue()} | {'maximum => 2147483647'.bold().red()}): ")).trim().to_lowercase().parse().unwrap();
+            loop {
+                match position {
+                    Ok(i32) => {
+                        if position < 0 { position = 0; }
+                        break;
+                    }
+                    Error => { input!(format!("Invalid input. Try again: ")).trim().to_lowercase().parse().unwrap(); }
+                }
+            }
+            let request = {}
+            self.send_request(&position)
+            let proceed: bool = input!(format!("If you would like to continue inputing commands, type true, otherwise type false.")).trim().to_lowercase().parse().unwrap();
+            loop {
+                match proceed {
+                    Ok(bool) => { break; }
                     Error => { proceed = input!(format!("Invalid input. Try again: ")).trim().to_lowercase().parse().unwrap(); }
                 }
             }

@@ -89,7 +89,6 @@ impl ServerExecution for CameraServer {
                 Error => {}
             }
         }
-
     }
 }
 
@@ -136,7 +135,7 @@ enum TicStepMode {
 }
 
 struct TicDriver {
-    fn get_current_position() -> Result<(), Error>;
+    fn get_current_position() -> Result<i32, Error>;
     fn set_target_position(position: &i32);
     fn set_target_position_relative(position: &i32);
     fn set_target_velocity(velocity: &i32);
@@ -155,14 +154,14 @@ struct TicDriver {
     fn set_max_accel(accel: &u32);
     fn set_max_deccel(deccel: &u32);
     fn set_current_limit(limit: &u16);
-    fn status() -> Result<(), Error>;
-    fn reached_top() -> Result<(), Error>;
-    fn reached_bottom() -> Result<(), Error>;
+    fn status();
+    fn reached_top() -> Result<bool, Error>;
+    fn reached_bottom() -> Result<bool, Error>;
 }
 
 impl TicDriver {
     #[no_panic]
-    fn get_current_position() -> Result<(), Error> {
+    fn get_current_position() -> Result<i32, Error> {
         todo!();
     }
     #[no_panic]
@@ -252,11 +251,11 @@ impl TicDriver {
         Command::new("ticcmd").arg("--status").arg("--full").spawn().expect(format!("{'Failed to get stepper motor driver status.'.red()}"));
     }
     #[no_panic]
-    fn reached_top() -> Result<(), Error> {
+    fn reached_top() -> Result<bool, Error> {
         todo!()
     }
     #[no_panic]
-    fn reached_bottom() -> Result<(), Error> {
+    fn reached_bottom() -> Result<bool, Error> {
         todo!()
     }
 }
@@ -269,7 +268,7 @@ impl ServerExecution for StepperMotorServer {
         loop {
             let process = rclrs::spin(&self.node)?;
             match process {
-                Ok(()) => { break; }
+                Ok(_) => { break; }
                 Error => {}
             }
         }
@@ -285,7 +284,7 @@ impl ServerNode for StepperMotorServer {
                 move |_request_header: &rclrs::rmw_request_id_t, request: Position.Request| -> Position.Response {
                     let requested_displacement: i32 = request.position-TicDriver.get_current_position()?;
                     match requested_displacement {
-                        Ok(()) => {
+                        Ok(i32) => {
                             println!("New position requested!");
                             if requested_displacement != 0 {
                                 let is_direction_downward: bool = (requested_displacement > 0);
