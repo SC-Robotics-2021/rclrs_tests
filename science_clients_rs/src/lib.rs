@@ -30,6 +30,7 @@ trait ClientExecution {
 }
 
 impl ClientNode for OnOffClient {
+    #[no_panic]
     fn new(subsystem, device) -> Result<Self, Error> {
         let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
         let _client = node.create_client::<SetBool>(format!("/{&subsystem}/{$device}/cmd"))?;
@@ -40,6 +41,7 @@ impl ClientNode for OnOffClient {
 }
 
 impl ClientNode for OnOffClient {
+    #[no_panic]
     fn new(subsystem, device) -> Result<Self, Error> {
         let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client"))?;
         let frame = Arc::new(Mutex::new(None));
@@ -64,6 +66,7 @@ impl ClientNode for OnOffClient {
 }
 
 impl ClientExecution for PositionClient {
+    #[no_panic]
     fn send_request(&self, position) {
         while not node._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("{&self._device} not available. Waiting..."))
@@ -83,6 +86,7 @@ impl ClientExecution for PositionClient {
         }
     }
 
+    #[no_panic]
     fn cli_control(&self) {
         std::thread::spawn(move || -> Result<(), Error> {
             rclrs::spin(&self.node)?;
@@ -111,6 +115,7 @@ impl ClientExecution for PositionClient {
 }
 
 impl ClientExecution for OnOffClient, CameraClient {
+    #[no_panic]
     fn send_request(&self, command) {
         while not node._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("{&node._device.to_sentence_case()} not available. Waiting..."))
@@ -134,6 +139,7 @@ impl ClientExecution for OnOffClient, CameraClient {
         }
     }
 
+    #[no_panic]
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
             rclrs::spin(&self.node)?;

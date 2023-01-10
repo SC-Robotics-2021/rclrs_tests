@@ -1,6 +1,6 @@
-use science_clients_rs::*;
+use science_clients_rs::CameraClient;
  
-fn main() -> Result<(), Error> {
+fn main() {
     let client = CameraClient::new(subsystem="science", device="microscope");
-    client.cli_control()
+    client.cli_control();
 }
