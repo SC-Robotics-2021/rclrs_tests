@@ -99,8 +99,9 @@ macro_rules! impl_ClientExecution {
                     rclrs::spin(&self._node)?;
                 });
                 let mut proceed: bool = true;
+                let mut state : bool;
                 while proceed {
-                    let mut state : bool = input!(format!("Enter a command for the {&self._device} ({'on => true'.bold().blue()} | {'off => false'.bold().red()}): ")).trim().to_lowercase().parse().unwrap();
+                    state = input!(format!("Enter a command for the {&self._device} ({'on => true'.bold().blue()} | {'off => false'.bold().red()}): ")).trim().to_lowercase().parse().unwrap();
                     loop {
                         match state {
                             Ok(bool) => { break; }

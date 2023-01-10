@@ -25,13 +25,7 @@ pub struct GPIOServer {
 impl ServerExecution for GPIOServer {
     #[no_panic]
     fn run(&self) {
-        loop {
-            let process = rclrs::spin(&self._node)?;
-            match process {
-                Ok(_) => { break; }
-                Error => {}
-            }
-        }
+        rclrs::spin(&self._node)?;
     }
 }
 
@@ -69,26 +63,20 @@ pub struct CameraServer {
 impl ServerExecution for CameraServer {
     #[no_panic]
     fn run(&self) {
-        loop {
-            let active_clone = Arc::clone(&self._active);
-            std::thread::spawn(move || -> Result<(), Error> {
-                let active = *active_clone.lock().unwrap();
-                loop {
-                    if active {
-                        let mut frame = Mat::default();
-                        self._cam.read(&mut frame)?;
-                        println!("Publishing frame!");
-                        self._publisher.publisher.publish(CvImage::from_cvmat(frame).into_imgmsg())?;
-                        std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
-                    }
+        let active_clone = Arc::clone(&self._active);
+        std::thread::spawn(move || -> Result<(), Error> {
+            let active = *active_clone.lock().unwrap();
+            loop {
+                if active {
+                    let mut frame = Mat::default();
+                    self._cam.read(&mut frame)?;
+                    println!("Publishing frame!");
+                    self._publisher.publisher.publish(CvImage::from_cvmat(frame).into_imgmsg())?;
+                    std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
                 }
-            });
-            let process = rclrs::spin(&self._node)?;
-            match process { // this match statement will catch an error and rerun the node in the event it crashes
-                Ok(_) => { break; },
-                Error => {}
             }
-        }
+        });
+        rclrs::spin(&self._node)?;
     }
 }
 
@@ -263,13 +251,7 @@ pub struct StepperMotorServer {}
 impl ServerExecution for StepperMotorServer {
     #[no_panic]
     fn run(&self) {
-        loop {
-            let process = rclrs::spin(&self._node)?;
-            match process {
-                Ok(_) => { break; }
-                Error => {}
-            }
-        }
+        rclrs::spin(&self._node)?;
     }
 }
 
