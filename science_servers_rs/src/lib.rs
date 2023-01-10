@@ -19,7 +19,7 @@ trait ServerExecution {
 pub struct GPIOServer {
     _pin: Arc<Mutex<Gpio>>;
 }
-necessa
+
 impl ServerExecution for GPIOServer {
     #[no_panic]
     fn run(&self) {
