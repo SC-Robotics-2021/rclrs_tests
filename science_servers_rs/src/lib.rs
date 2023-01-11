@@ -37,8 +37,8 @@ impl GPIOServer {
     }
 
     #[no_panic]
-    fn run(&self) {
-        rclrs::spin(&self._node)?;
+    fn run(&self) -> Result<(), Error> {
+        rclrs::spin(&self._node)?
     }
 }
 
@@ -80,7 +80,7 @@ impl CameraServer {
     }
 
     #[no_panic]
-    fn run(&self) {
+    fn run(&self) -> Result<(), Error> {
         let active_clone = Arc::clone(&self._active);
         std::thread::spawn(move || -> Result<(), Error> {
             let active = *active_clone.lock().unwrap();
@@ -93,8 +93,8 @@ impl CameraServer {
                     std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
                 }
             }
-        });
-        rclrs::spin(self._node)?;
+        }?);
+        rclrs::spin(self._node)?
     }
 }
 
@@ -307,7 +307,7 @@ impl ServerNode for StepperMotorServer {
     }
 
     #[no_panic]
-    fn run(&self) {
-        rclrs::spin(self._node)?;
+    fn run(&self) -> Result<(), Error> {
+        rclrs::spin(self._node)?
     }
 }

@@ -29,7 +29,7 @@ impl OnOffClient {
     }
 
     #[no_panic]
-    fn send_request(&self, state: bool) {
+    fn send_request(&self, state: &bool) {
         while !self._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("The {} is not available. Waiting a second...", &self._device))
         }
@@ -47,12 +47,12 @@ impl OnOffClient {
     #[no_panic]
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            rclrs::spin(&self._node)?;
+            rclrs::spin(&self._node)?
         });
         let mut proceed: bool = true;
         let mut state : bool;
         while proceed {
-            state = input!(format!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().blue(), "off => false".bold().red())).trim().to_lowercase().parse()?;
+            state = input!(format!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().blue(), "off => false".bold().red())).trim().to_lowercase().parse();
             loop {
                 match state {
                     Ok(bool) => { break; }
@@ -60,11 +60,11 @@ impl OnOffClient {
                 }
                 self.send_request(&state)
             }
-            proceed = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse()?;
+            proceed = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse();
             loop {
                 match proceed {
                     Ok(bool) => { break; }
-                    Error => { proceed = input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse()?; }
+                    Error => { proceed = input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse(); }
                 }
             }
         }
@@ -105,7 +105,7 @@ impl CameraClient {
     }
 
     #[no_panic]
-    fn send_request(&self, state: bool) {
+    fn send_request(&self, state: &bool) {
         while !self._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("The {} is not available. Waiting a second...", &self._device))
         }
@@ -123,12 +123,12 @@ impl CameraClient {
     #[no_panic]
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            rclrs::spin(&self._node)?;
+            rclrs::spin(&self._node)?
         });
         let mut proceed: bool = true;
         let mut state : bool;
         while proceed {
-            state = input!(format!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().blue(), "off => false".bold().red())).trim().to_lowercase().parse()?;
+            state = input!(format!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().blue(), "off => false".bold().red())).trim().to_lowercase().parse();
             loop {
                 match state {
                     Ok(bool) => { break; }
@@ -136,11 +136,11 @@ impl CameraClient {
                 }
                 self.send_request(&state)
             }
-            proceed = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse()?;
+            proceed = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse();
             loop {
                 match proceed {
                     Ok(bool) => { break; }
-                    Error => { proceed = input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse()?; }
+                    Error => { proceed = input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse(); }
                 }
             }
         }
@@ -165,7 +165,7 @@ impl PositionClient {
     }
 
     #[no_panic]
-    fn send_request(&self, position: i32) {
+    fn send_request(&self, position: &i32) {
         while !self._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("{} not available. Waiting...", &self._device));
         }
@@ -190,12 +190,12 @@ impl PositionClient {
     #[no_panic]
     fn cli_control(&self) {
         std::thread::spawn(move || -> Result<(), Error> {
-            rclrs::spin(&self._node)?;
+            rclrs::spin(&self._node)?
         });
         let mut proceed: bool = true;
         let mut position: i32;
         while proceed {
-            position = input!(format!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().blue(), "maximum => 2147483647".bold().red())).trim().to_lowercase().parse()?;
+            position = input!(format!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().blue(), "maximum => 2147483647".bold().red())).trim().to_lowercase().parse();
             loop {
                 match position {
                     i32 => {
@@ -206,11 +206,11 @@ impl PositionClient {
                 }
             }
             self.send_request(&position);
-            proceed = input!(format!("If you would like to continue inputing commands, type true, otherwise type false.")).trim().to_lowercase().parse()?;
+            proceed = input!(format!("If you would like to continue inputing commands, type true, otherwise type false.")).trim().to_lowercase().parse();
             loop {
                 match proceed {
                     bool => { break; }
-                    Error => { proceed = input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse()?; }
+                    Error => { proceed = input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse(); }
                 }
             }
         }
