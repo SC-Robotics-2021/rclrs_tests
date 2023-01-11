@@ -47,19 +47,19 @@ impl OnOffClient {
     #[no_panic]
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            rclrs::spin(&self._node)?
+            Ok(rclrs::spin(&self._node)?)
         });
-        let mut proceed: bool = true;
-        let mut state : bool;
-        while proceed {
+        let mut proceed: Result<bool, Error> = Ok(true);
+        let mut state : Result<bool, Error>;
+        while Ok(proceed) {
             state = input!(format!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().blue(), "off => false".bold().red())).trim().to_lowercase().parse();
             loop {
                 match state {
                     Ok(bool) => { break; }
-                    Error => { input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse()?; }
+                    Error => { state = input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse()?; }
                 }
-                self.send_request(&state)
             }
+            self.send_request(&state?);
             proceed = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse();
             loop {
                 match proceed {
@@ -68,6 +68,7 @@ impl OnOffClient {
                 }
             }
         }
+        Ok(())
     }
 }
 
@@ -123,10 +124,10 @@ impl CameraClient {
     #[no_panic]
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            rclrs::spin(&self._node)?
+            Ok(rclrs::spin(&self._node)?)
         });
-        let mut proceed: bool = true;
-        let mut state : bool;
+        let mut proceed: Result<bool, Error> = Ok(true);
+        let mut state : Result<bool, Error>;
         while proceed {
             state = input!(format!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().blue(), "off => false".bold().red())).trim().to_lowercase().parse();
             loop {
@@ -134,7 +135,7 @@ impl CameraClient {
                     Ok(bool) => { break; }
                     Error => { input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse()?; }
                 }
-                self.send_request(&state)
+                self.send_request(&state?)
             }
             proceed = input!(format!("If you would like to continue inputing commands, type {'true'.bold().blue()}, otherwise type {'false'.bold().red()}.")).trim().to_lowercase().parse();
             loop {
@@ -144,6 +145,7 @@ impl CameraClient {
                 }
             }
         }
+        Ok(())
     }
 }
 
@@ -190,29 +192,30 @@ impl PositionClient {
     #[no_panic]
     fn cli_control(&self) {
         std::thread::spawn(move || -> Result<(), Error> {
-            rclrs::spin(&self._node)?
+            Ok(rclrs::spin(&self._node)?)
         });
-        let mut proceed: bool = true;
-        let mut position: i32;
+        let mut proceed: Result<bool, Error> = Ok(true);
+        let mut position: Result<i32, Error>;
         while proceed {
             position = input!(format!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().blue(), "maximum => 2147483647".bold().red())).trim().to_lowercase().parse();
             loop {
                 match position {
-                    i32 => {
+                    Ok(i32) => {
                         if position < 0 { position = 0; }
                         break;
                     }
                     Error => { position = input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse()?; }
                 }
             }
-            self.send_request(&position);
+            self.send_request(&position?);
             proceed = input!(format!("If you would like to continue inputing commands, type true, otherwise type false.")).trim().to_lowercase().parse();
             loop {
                 match proceed {
-                    bool => { break; }
+                    Ok(bool) => { break; }
                     Error => { proceed = input!(format!("{}", "Invalid input. Try again: ".yellow())).trim().to_lowercase().parse(); }
                 }
             }
         }
+        Ok(())
     }
 }

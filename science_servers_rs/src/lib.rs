@@ -38,7 +38,7 @@ impl GPIOServer {
 
     #[no_panic]
     fn run(&self) -> Result<(), Error> {
-        rclrs::spin(&self._node)?
+        Ok(rclrs::spin(&self._node)?)
     }
 }
 
@@ -94,7 +94,7 @@ impl CameraServer {
                 }
             }
         }?);
-        rclrs::spin(self._node)?
+        Ok(rclrs::spin(self._node)?)
     }
 }
 
@@ -308,6 +308,6 @@ impl ServerNode for StepperMotorServer {
 
     #[no_panic]
     fn run(&self) -> Result<(), Error> {
-        rclrs::spin(self._node)?
+        Ok(rclrs::spin(self._node)?)
     }
 }
