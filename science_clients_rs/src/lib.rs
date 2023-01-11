@@ -29,7 +29,7 @@ impl OnOffClient {
     }
 
     #[no_panic]
-    fn send_request(&self, state: &bool) {
+    fn send_request(&self, state: bool) {
         while !self._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("The {} is not available. Waiting a second...", &self._device))
         }
@@ -45,13 +45,13 @@ impl OnOffClient {
     }
 
     #[no_panic]
-    fn cli_control(&self) -> Result<(), Error> {
+    fn cli_control(&self) {
         std::thread::spawn(move || -> Result<(), Error> {
             Ok(rclrs::spin(&self._node)?)
         });
         let mut proceed: Result<bool, Error> = Ok(true);
         let mut state : Result<bool, Error>;
-        while Ok(proceed) {
+        while proceed == Ok(true) {
             state = input!(format!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().blue(), "off => false".bold().red())).trim().to_lowercase().parse();
             loop {
                 match state {
@@ -68,7 +68,6 @@ impl OnOffClient {
                 }
             }
         }
-        Ok(())
     }
 }
 
@@ -122,13 +121,13 @@ impl CameraClient {
     }
 
     #[no_panic]
-    fn cli_control(&self) -> Result<(), Error> {
+    fn cli_control(&self) {
         std::thread::spawn(move || -> Result<(), Error> {
             Ok(rclrs::spin(&self._node)?)
         });
         let mut proceed: Result<bool, Error> = Ok(true);
         let mut state : Result<bool, Error>;
-        while proceed {
+        while proceed == Ok(true) {
             state = input!(format!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().blue(), "off => false".bold().red())).trim().to_lowercase().parse();
             loop {
                 match state {
@@ -145,7 +144,6 @@ impl CameraClient {
                 }
             }
         }
-        Ok(())
     }
 }
 
@@ -159,7 +157,7 @@ pub struct PositionClient {
 impl PositionClient {
     #[no_panic]
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str().as_str())?;
+        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
         let _client = _node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, $device).as_str())?;
         let _subsystem = subsystem;
         let _device = str.replace($device, "_", " ");
@@ -167,7 +165,7 @@ impl PositionClient {
     }
 
     #[no_panic]
-    fn send_request(&self, position: &i32) {
+    fn send_request(&self, position: i32) {
         while !self._client.wait_for_service(timeout_sec=1.0) {
             println!(format!("{} not available. Waiting...", &self._device));
         }
@@ -196,7 +194,7 @@ impl PositionClient {
         });
         let mut proceed: Result<bool, Error> = Ok(true);
         let mut position: Result<i32, Error>;
-        while proceed {
+        while proceed == Ok(true) {
             position = input!(format!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().blue(), "maximum => 2147483647".bold().red())).trim().to_lowercase().parse();
             loop {
                 match position {
@@ -216,6 +214,5 @@ impl PositionClient {
                 }
             }
         }
-        Ok(())
     }
 }
