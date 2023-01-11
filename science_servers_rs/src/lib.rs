@@ -1,9 +1,12 @@
-use std::{sync::{Arc, Mutex}, thread, time};
+use std::{sync::{Arc, Mutex}, thread, time, str::{ParseBoolError, ParseIntError}};
 use science_interfaces_rs::srv::Position;
 use opencv::{prelude::*, highgui, videoio};
+use cv_bridge_rs::CvImage;
 use std_srvs::srv::SetBool;
 use rppal::gpio::Gpio;
-use anyhow::{Result, Error}
+use anyhow::{Result, Error};
+use colored::*;
+
 pub struct GPIOServer {
     _node: rclrs::Node,
     _subsystem: String,
@@ -27,10 +30,10 @@ impl GPIOServer {
                     }
                     pin.set_low();
                     SetBool::Response {success: true, message: format!("{} is off.", &device) }
-            })?
+            }?)
         };
         let _subsystem = subsystem;
-        let _device = str.replace(format!("{}", $device), "_", " ");
+        let _device = &device.replace("_", " ");
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server})
     }
 
@@ -63,7 +66,7 @@ impl CameraServer {
                     }
                     *active_clone.lock().unwrap() = request.data;
                     SetBool::Response {success: true, message: format!("{} is now in requested state.", &device) }
-            })?
+            }?)
         };
         let _publisher = _node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
         let _cam = videoio::VideoCapture(camera_num)?;
@@ -71,7 +74,7 @@ impl CameraServer {
         _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height);
         let _capture_delay = capture_delay; 
         let _subsystem = subsystem;
-        let _device = str.replace($device, "_", " ");
+        let _device = &device.replace("_", " ");
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
     }
 
@@ -230,11 +233,11 @@ impl ServerNode for StepperMotorServer {
                             Position::Response{success: false, position: TicDriver.get_current_position(), errors: "Invalid request!".red() }
                         }
                     }
-                }
-            )?
+                }?
+            )
         };
         let _subsystem = subsystem;
-        let _device = str.replace(format!("{}", $device), "_", " ");
+        let _device = &device.replace("_", " ");
         // Zero the platform's height
         TicDriver.set_current_limit(3200);
         TicDriver.set_current_limit(TicStepMode::Microstep256);
