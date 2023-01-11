@@ -1,6 +1,5 @@
-use std::env;
-use std::sync::{Arc, Mutex};
-use anyhow::{Error, Result};
+use std::{env, sync::{Arc, Mutex}};
+use anyhow::{Result, Error};
 use inflector::Inflector;
 use input_macro::input;
 use colored::Colorize;
@@ -20,9 +19,9 @@ pub struct OnOffClient {
 impl OnOffClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
-        let _client = _node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, $device).as_str())?;
+        let _client = _node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subsystem = subsystem;
-        let _device = str.replace($device, "_", " ");
+        let _device = str.replace(&device, "_", " ");
         Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client})
     }
 
@@ -30,7 +29,7 @@ impl OnOffClient {
         while !self._client.wait_for_service(timeout_sec=1.0) {
             println!("The {} is not available. Waiting a second...", &self._device);
         }
-        let request = std_srvs::srv::SetBool_Request{data: *state};
+        let request = std_srvs::srv::SetBool::Request{data: *state};
         let future = self._client.call_async(&request);
         println!("Request sent to {}", &self._device);
         while rclrs.ok() {
@@ -83,9 +82,9 @@ impl CameraClient {
         let frame_clone = Arc::clone(&_frame);
         let _client = _node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subscription = {
-            _node.create_subscription(format!("/{&subsystem}/{$device}/images"), rclrs::QOS_PROFILE_DEFAULT,
+            _node.create_subscription(format!("/{}/{}/images", &subsystem, &device), rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| -> Result<(), Error> {
-                    println!("Recieving new {} image!", str.replace($device, '_', ' '));
+                    println!("Recieving new {} image!", str::replace(&device, '_', ' '));
                    *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
                     if frame_clone.lock().unwrap().size()?.width > 0 {
                         highgui::imshow(format!("{}", &device), &frame_clone.lock().unwrap());
@@ -95,7 +94,7 @@ impl CameraClient {
             )?
         };
         let _subsystem = subsystem;
-        let _device = str.replace($device, "_", " ");
+        let _device = str::replace(&device, "_", " ");
         Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client, _subscription:_subscription, _frame:_frame})
     }
 
@@ -103,7 +102,7 @@ impl CameraClient {
         while !self._client.wait_for_service(timeout_sec=1.0) {
             println!("The {} is not available. Waiting a second...", &self._device);
         }
-        let request = std_srvs::srv::SetBool_Request{data: *state};
+        let request = std_srvs::srv::SetBool::Request{data: *state};
         let future = self._client.call_async(&request);
         println!("Request sent to {}", &self._device);
         while rclrs.ok() {
@@ -150,9 +149,9 @@ pub struct PositionClient {
 impl PositionClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
-        let _client = _node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, $device).as_str())?;
+        let _client = _node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subsystem = subsystem;
-        let _device = str.replace($device, "_", " ");
+        let _device = str::replace(&device, "_", " ");
         Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client})
     }
 
@@ -160,7 +159,7 @@ impl PositionClient {
         while !self._client.wait_for_service(timeout_sec=1.0) {
             println!("{} not available. Waiting...", &self._device);
         }
-        let request = science_interfaces_rs::srv::Position_Request{position: *position};
+        let request = science_interfaces_rs::srv::Position::Request{position: *position};
         let future = self._client.call_async(&request);
         println!("Request sent to {}.", &self._device);
         while rclrs.ok() {

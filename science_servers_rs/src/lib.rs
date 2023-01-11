@@ -1,9 +1,9 @@
-use std::{sync::Arc, thread, time};
+use std::{sync::{Arc, Mutex}, thread, time};
 use science_interfaces_rs::srv::Position;
 use opencv::{prelude::*, highgui, videoio};
 use std_srvs::srv::SetBool;
 use rppal::gpio::Gpio;
-
+use anyhow::{Result, Error}
 pub struct GPIOServer {
     _node: rclrs::Node,
     _subsystem: String,
@@ -19,14 +19,14 @@ impl GPIOServer {
         let pin_clone =  Arc::clone(&_pin);
         let _server = {
             _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: SetBool.Request| -> SetBool.Response {
+                move |_request_header: &rclrs::rmw_request_id_t, request: SetBool::Request| -> SetBool::Response {
                     pin = *pin_clone.lock().unwrap();
                     if request.data {
                         pin.set_high();
-                        SetBool.Response {success: true, message: format!("{} is on.", &device) }
+                        SetBool::Response {success: true, message: format!("{} is on.", &device) }
                     }
                     pin.set_low();
-                    SetBool.Response {success: true, message: format!("{} is off.", &device) }
+                    SetBool::Response {success: true, message: format!("{} is off.", &device) }
             })?
         };
         let _subsystem = subsystem;
@@ -57,12 +57,12 @@ impl CameraServer {
         let active_clone =  Arc::clone(&active);
         let _server = {
             _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: SetBool.Request| -> SetBool.Response {
+                move |_request_header: &rclrs::rmw_request_id_t, request: SetBool::Request| -> SetBool::Response {
                     if request.data == *active_clone.lock().unwrap() {
-                        SetBool_Response {success: true, message: format!("{} is already in requested state.", &device).yellow() }
+                        SetBool::Response {success: true, message: format!("{} is already in requested state.", &device).yellow() }
                     }
                     *active_clone.lock().unwrap() = request.data;
-                    SetBool.Response {success: true, message: format!("{} is now in requested state.", &device) }
+                    SetBool::Response {success: true, message: format!("{} is now in requested state.", &device) }
             })?
         };
         let _publisher = _node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
@@ -105,30 +105,7 @@ enum TicStepMode {
     Microstep256 = 9,
 }
 
-struct TicDriver {
-    fn get_current_position() -> Result<i32, Error>;
-    fn set_target_position(position: &i32);
-    fn set_target_position_relative(position: &i32);
-    fn set_target_velocity(velocity: &i32);
-    fn halt_and_set_position(position: &i32);
-    fn halt_and_hold();
-    fn go_home_forward();
-    fn go_home_reverse();
-    fn reset_command_timeout();
-    fn deenergize();
-    fn energize();
-    fn exit_safe_start();
-    fn enter_safe_start();
-    fn clear_driver_error();
-    fn set_max_speed(speed: &u32);
-    fn set_starting_speed(speed: &u32);
-    fn set_max_accel(accel: &u32);
-    fn set_max_deccel(deccel: &u32);
-    fn set_current_limit(limit: &u16);
-    fn status();
-    fn reached_top() -> Result<bool, Error>;
-    fn reached_bottom() -> Result<bool, Error>;
-}
+struct TicDriver {}
 
 impl TicDriver {
     fn get_current_position() -> Result<i32, Error> {
@@ -138,7 +115,7 @@ impl TicDriver {
         Command::new("ticcmd").arg("--position").arg(format!("{}", position)).spawn().expect("Failed to set stepper motor target position.".red());
     }
     fn set_relative_target(position: &i32) {
-        Command::new("ticcmd").arg("--set-target-position-relative").arg(format!"{}", position).spawn().expect("Failed to set relative stepper motor target position.".red());
+        Command::new("ticcmd").arg("--set-target-position-relative").arg(format!("{}", position)).spawn().expect("Failed to set relative stepper motor target position.".red());
     }
     fn set_target_velocity(velocity: &i32) {
         Command::new("ticcmd").arg("--set-target-velocity").arg(format!("{}", velocity)).spawn().expect("Failed to set stepper motor target velocity.".red());
@@ -220,7 +197,7 @@ impl ServerNode for StepperMotorServer {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _server = {
             _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: Position.Request| -> Position.Response {
+                move |_request_header: &rclrs::rmw_request_id_t, request: Position::Request| -> Position::Response {
                     let requested_displacement: Result<i32, Error> = request.position-TicDriver.get_current_position()?;
                     match requested_displacement {
                         Ok(i32) => {
@@ -245,12 +222,12 @@ impl ServerNode for StepperMotorServer {
                                 }
                                 TicDriver.deenergize();
                                 TicDriver.enter_safe_start();
-                                Position_Response {success: true, position: TicDriver.get_current_position(), errors: "" }
+                                Position::Response {success: true, position: TicDriver.get_current_position(), errors: "" }
                             }
-                            Position_Response{success: false, position: TicDriver.get_current_position(), errors: "Already at requested position.".yellow()}
+                            Position::Response{success: false, position: TicDriver.get_current_position(), errors: "Already at requested position.".yellow()}
                         },
                         Error => {
-                            Position_Response{success: false, position: TicDriver.get_current_position(), errors: "Invalid request!".red() }
+                            Position::Response{success: false, position: TicDriver.get_current_position(), errors: "Invalid request!".red() }
                         }
                     }
                 }
