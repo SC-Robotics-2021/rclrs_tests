@@ -5,43 +5,27 @@ use std_srvs::srv::SetBool;
 use rppal::gpio::Gpio;
 use no_panic::no_panic;
 
-trait ServerNode {
+pub struct GPIOServer {
     _node: rclrs::Node,
     _subsystem: String,
     _device: String,
     _server: Arc<rclrs::Server<_>>,
-    fn new() -> Result<Self, Error>,
-}
-
-trait ServerExecution {
-    #[no_panic]
-    fn run(&self);
-}
-
-pub struct GPIOServer {
     _pin: Arc<Mutex<Gpio>>;
 }
 
-impl ServerExecution for GPIOServer {
-    #[no_panic]
-    fn run(&self) {
-        rclrs::spin(&self._node)?;
-    }
-}
-
-impl ServerNode for GPIOServer {
+impl GPIOServer {
     #[no_panic]
     fn new(&self, subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_server", &device))?;
+        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _pin = Arc::new(Mutex::new(Gpio::new()?.get(pin_num)?.into_output_low()));
         let pin_clone =  Arc::clone(&_pin);
         let _server = {
-            _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device),
+            _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
                 move |_request_header: &rclrs::rmw_request_id_t, request: SetBool.Request| -> SetBool.Response {
                     pin = *pin_clone.lock().unwrap();
                     if request.data {
                         pin.set_high();
-                        SetBool.Response {success: true, message: format1("{} is on.", &device) }
+                        SetBool.Response {success: true, message: format!("{} is on.", &device) }
                     }
                     pin.set_low();
                     SetBool.Response {success: true, message: format!("{} is off.", &device) }
@@ -49,45 +33,34 @@ impl ServerNode for GPIOServer {
         };
         let _subsystem = subsystem;
         let _device = str.replace(format!("{}", $device), "_", " ");
-        Ok(Self{_node, _subsystem, _device, _server})
+        Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server})
+    }
+
+    #[no_panic]
+    fn run(&self) {
+        rclrs::spin(&self._node)?;
     }
 }
 
 pub struct CameraServer {
+    _node: rclrs::Node,
+    _subsystem: String,
+    _device: String,
+    _server: Arc<rclrs::Server<_>>,
     _publisher: Arc<rclrs::Publisher<Image>>,
     _cam: videoio::VideoCapture,
     _capture_delay: u8,
     _active: Arc<Mutex<bool>>,
 }
 
-impl ServerExecution for CameraServer {
-    #[no_panic]
-    fn run(&self) {
-        let active_clone = Arc::clone(&self._active);
-        std::thread::spawn(move || -> Result<(), Error> {
-            let active = *active_clone.lock().unwrap();
-            loop {
-                if active {
-                    let mut frame = Mat::default();
-                    self._cam.read(&mut frame)?;
-                    println!("Publishing frame!");
-                    self._publisher.publisher.publish(CvImage::from_cvmat(frame).into_imgmsg())?;
-                    std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
-                }
-            }
-        });
-        rclrs::spin(&self._node)?;
-    }
-}
-
-impl ServerNode for CameraServer {
+impl CameraServer {
     #[no_panic]
     fn new(subsystem: String, device: String, camera_num: String, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
-        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_server", &device))?;
+        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _active = Arc::new(Mutex::(false));
         let active_clone =  Arc::clone(&active);
         let _server = {
-            _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device),
+            _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
                 move |_request_header: &rclrs::rmw_request_id_t, request: SetBool.Request| -> SetBool.Response {
                     if request.data == *active_clone.lock().unwrap() {
                         SetBool_Response {success: true, message: format!("{} is already in requested state.", &device).yellow() }
@@ -103,7 +76,25 @@ impl ServerNode for CameraServer {
         let _capture_delay = capture_delay; 
         let _subsystem = subsystem;
         let _device = str.replace($device, "_", " ");
-        Ok(Self{node, _subsystem, _device, _server, _publisher, _cam, _capture_delay, _active})
+        Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
+    }
+
+    #[no_panic]
+    fn run(&self) {
+        let active_clone = Arc::clone(&self._active);
+        std::thread::spawn(move || -> Result<(), Error> {
+            let active = *active_clone.lock().unwrap();
+            loop {
+                if active {
+                    let mut frame = Mat::default();
+                    self._cam.read(&mut frame)?;
+                    println!("Publishing frame!");
+                    self._publisher.publisher.publish(CvImage::from_cvmat(frame).into_imgmsg())?;
+                    std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
+                }
+            }
+        });
+        rclrs::spin(self._node)?;
     }
 }
 
@@ -245,21 +236,19 @@ impl TicDriver {
     }
 }
 
-pub struct StepperMotorServer {}
-
-impl ServerExecution for StepperMotorServer {
-    #[no_panic]
-    fn run(&self) {
-        rclrs::spin(&self._node)?;
-    }
+pub struct StepperMotorServer {
+    _node: rclrs::Node,
+    _subsystem: String,
+    _device: String,
+    _server: Arc<rclrs::Server<_>>,
 }
 
 impl ServerNode for StepperMotorServer {
     #[no_panic]
     fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
-        let mut node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_server", &device))?;
+        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _server = {
-            _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device),
+            _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
                 move |_request_header: &rclrs::rmw_request_id_t, request: Position.Request| -> Position.Response {
                     let requested_displacement: i32 = request.position-TicDriver.get_current_position()?;
                     match requested_displacement {
@@ -315,5 +304,10 @@ impl ServerNode for StepperMotorServer {
         TicDriver.deenergize();
         TicDriver.enter_safe_start();
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server})
+    }
+
+    #[no_panic]
+    fn run(&self) {
+        rclrs::spin(self._node)?;
     }
 }
