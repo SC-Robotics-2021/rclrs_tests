@@ -21,7 +21,7 @@ pub struct OnOffClient {
 impl OnOffClient {
     #[no_panic]
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{&device}_client").as_str())?;
+        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{&device}_client").as_str())?;
         let _client = _node.create_client::<SetBool>(format!("/{&subsystem}/{$device}/cmd").as_str())?;
         let _subsystem = subsystem;
         let _device = str.replace($device, "_", " ");
@@ -84,7 +84,7 @@ pub struct CameraClient {
 impl CameraClient {
     #[no_panic]
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
+        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
         let _frame = Arc::new(Mutex::new(None));
         let frame_clone = Arc::clone(&_frame);
         let _client = _node.create_client::<SetBool>(format!("/{&subsystem}/{&device}/cmd").as_str())?;
@@ -159,7 +159,7 @@ pub struct PositionClient {
 impl PositionClient {
     #[no_panic]
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str().as_str())?;
+        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str().as_str())?;
         let _client = _node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, $device).as_str())?;
         let _subsystem = subsystem;
         let _device = str.replace($device, "_", " ");

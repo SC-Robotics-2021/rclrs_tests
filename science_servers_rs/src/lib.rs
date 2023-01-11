@@ -16,7 +16,7 @@ pub struct GPIOServer {
 impl GPIOServer {
     #[no_panic]
     fn new(&self, subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
+        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _pin = Arc::new(Mutex::new(Gpio::new()?.get(pin_num)?.into_output_low()));
         let pin_clone =  Arc::clone(&_pin);
         let _server = {
@@ -56,7 +56,7 @@ pub struct CameraServer {
 impl CameraServer {
     #[no_panic]
     fn new(subsystem: String, device: String, camera_num: String, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
-        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
+        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _active = Arc::new(Mutex::(false));
         let active_clone =  Arc::clone(&active);
         let _server = {
@@ -246,7 +246,7 @@ pub struct StepperMotorServer {
 impl ServerNode for StepperMotorServer {
     #[no_panic]
     fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
+        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _server = {
             _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
                 move |_request_header: &rclrs::rmw_request_id_t, request: Position.Request| -> Position.Response {
