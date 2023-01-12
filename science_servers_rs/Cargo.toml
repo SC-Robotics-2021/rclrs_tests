@@ -5,15 +5,6 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[bin]]
-name = "publisher"
-path = "./src/publisher.rs"
-
-[[bin]]
-name = "subscriber"
-path = "./src/subscriber.rs"
-
-
 [dependencies]
 anyhow = "*"
 rclrs = "*"
@@ -21,7 +12,6 @@ opencv = "0.74"
 cv_bridge_rs = "*"
 sensor_msgs = "*"
 std_srvs = "*"
-Inflector = "*"
 input-macro ="*"
 science_interfaces_rs = "*"
 colored = "*"

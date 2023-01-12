@@ -21,8 +21,8 @@ impl GPIOServer {
         let _pin = Arc::new(Mutex::new(Gpio::new()?.get(pin_num)?.into_output_low()));
         let pin_clone =  Arc::clone(&_pin);
         let _server = {
-            _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: SetBool::Request| -> SetBool::Response {
+            _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+                move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool::Request| -> std_srvs::srv::SetBool::Response {
                     pin = *pin_clone.lock().unwrap();
                     if request.data {
                         pin.set_high();
@@ -59,8 +59,8 @@ impl CameraServer {
         let _active = Arc::new(Mutex::(false));
         let active_clone =  Arc::clone(&active);
         let _server = {
-            _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: SetBool::Request| -> SetBool::Response {
+            _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+                move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool::Request| -> std_srvs::srv::SetBool::Response {
                     if request.data == *active_clone.lock().unwrap() {
                         SetBool::Response {success: true, message: format!("{} is already in requested state.", &device).yellow() }
                     }
@@ -199,8 +199,8 @@ impl ServerNode for StepperMotorServer {
     fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _server = {
-            _node.create_subscription(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: Position::Request| -> Position::Response {
+            _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+                move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces::srv::Position::Request| -> science_interfaces::srv::Position::Response {
                     let requested_displacement: Result<i32, Error> = request.position-TicDriver.get_current_position()?;
                     match requested_displacement {
                         Ok(i32) => {
