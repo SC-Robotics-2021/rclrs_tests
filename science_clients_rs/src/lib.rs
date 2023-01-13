@@ -25,7 +25,8 @@ impl OnOffClient {
     }
 
     async fn send_request(&self, state: &bool) -> Result<(), Error> {
-        let future = self._client.call_async(&std_srvs::srv::SetBool_Request{data: *state});
+        let request = std_srvs::srv::SetBool_Request{data: *state}
+        let future = self._client.call_async(&request);
         println!("Request sent to {}", &self._device);
         let response = future.await?;
         println!("{}", response.message);
@@ -92,7 +93,8 @@ impl CameraClient {
     }
 
     async fn send_request(&self, state: &bool) -> Result<(), Error> {
-        let future = self._client.call_async(&std_srvs::srv::SetBool_Request{data: *state});
+        let request = std_srvs::srv::SetBool_Request{data: *state}
+        let future = self._client.call_async(&request);
         println!("Request sent to {}", &self._device);
         let response = future.await?;
         println!("{}", response.message);
@@ -143,7 +145,8 @@ impl PositionClient {
     }
 
     async fn send_request(&self, position: &i32) -> Result<(), Error> {
-        let future = self._client.call_async(&science_interfaces_rs::srv::Position_Request{position: *position});
+        let request = science_interfaces_rs::srv::Position_Request{position: *position}
+        let future = self._client.call_async(&);
         println!("Request sent to {}.", &self._device);
         let response = future.await?;
         match response.success {
