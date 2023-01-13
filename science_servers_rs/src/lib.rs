@@ -13,7 +13,7 @@ pub struct GPIOServer {
     _subsystem: String,
     _device: String,
     _server: Arc<rclrs::Service<SetBool>>,
-    _pin: Arc<Mutex<Gpio>>,
+    _pin: Arc<Mutex<OutputPin>>,
 }
 
 impl GPIOServer {
@@ -21,19 +21,17 @@ impl GPIOServer {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _pin = Arc::new(Mutex::new(Gpio::new()?.get(pin_num)?.into_output_low()));
         let pin_clone =  Arc::clone(&_pin);
-        let _server = {
-            _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
-                    let pin = *pin_clone.lock().unwrap();
-                    if request.data {
-                        pin.set_high();
-                        std_srvs::srv::SetBool_Response{success: true, message: format!("{} is on.", &device) }
-                    }
-                    pin.set_low();
-                    std_srvs::srv::SetBool_Response{success: true, message: format!("{} is off.", &device) }
-                },
-            )
-        };
+        let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+            move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
+                let pin = *pin_clone.lock().unwrap();
+                if request.data {
+                    pin.set_high();
+                    std_srvs::srv::SetBool_Response{success: true, message: format!("{} is on.", &device) }
+                }
+                pin.set_low();
+                std_srvs::srv::SetBool_Response{success: true, message: format!("{} is off.", &device) }
+            }
+        );
         let _subsystem = subsystem;
         let _device = device.replace("_", " ");
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server, _pin:_pin})
@@ -56,22 +54,20 @@ pub struct CameraServer {
 }
 
 impl CameraServer {
-    fn new(subsystem: String, device: String, camera_num: String, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
+    fn new(subsystem: String, device: String, camera_num: i32, frame_width: f64, frame_height: f64, capture_delay: u64) -> Result<Self, Error> { // capture delay is in milliseconds
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
-        let _server = {
-            _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
-                    if request.data == *active_clone.unwrap() {
-                        std_srvs::srv::SetBool_Response{success: true, message: format!("{} is already in requested state.", &device).yellow().to_string() }
-                    }
-                    *active_clone.lock().unwrap() = request.data;
-                    std_srvs::srv::SetBool_Response{success: true, message: format!("{} is now in requested state.", &device).to_string() }
-                },
-            )
-        };
-        let _publisher = _node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
+        let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+            move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
+                if request.data == *active_clone.unwrap() {
+                    std_srvs::srv::SetBool_Response{success: true, message: format!("{} is already in requested state.", &device).yellow().to_string() }
+                }
+                *active_clone.lock().unwrap() = request.data;
+                std_srvs::srv::SetBool_Response{success: true, message: format!("{} is now in requested state.", &device).to_string() }
+            }
+        );
+        let _publisher = _node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT);
         let _cam = videoio::VideoCapture::new(camera_num)?;
         _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width);
         _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height);
@@ -119,95 +115,95 @@ impl TicDriver {
     }
     fn set_target_position(position: &i32) {
         Command::new("ticcmd").arg("--position").arg(format!("{}", position))
-        .spawn().expect(format!("{}", "Failed to set stepper motor target position.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to set stepper motor target position.".red()).as_str());
     }
     fn set_target_position_relative(position: &i32) {
         Command::new("ticcmd").arg("--set-target-position-relative").arg(format!("{}", position))
-        .spawn().expect(format!("{}", "Failed to set relative stepper motor target position.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to set relative stepper motor target position.".red()).as_str());
     }
     fn set_target_velocity(velocity: &i32) {
         Command::new("ticcmd").arg("--set-target-velocity").arg(format!("{}", velocity))
-        .spawn().expect(format!("{}", "Failed to set stepper motor target velocity.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to set stepper motor target velocity.".red()).as_str());
     }
     fn halt_and_set_position(position: &i32) {
         Command::new("ticcmd").arg("--halt-and-set-position").arg(format!("{}", position))
-        .spawn().expect(format!("{}", "Failed to halt and set stepper motor position.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to halt and set stepper motor position.".red()).as_str());
     }
     fn halt_and_hold() {
         Command::new("ticcmd").arg("--halt-and-hold")
-        .spawn().expect(format!("{}", "Failed to halt and hold stepper motor.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to halt and hold stepper motor.".red()).as_str());
     }
     fn go_home_forward() {
         Command::new("ticcmd").arg("--home").arg("fwd")
-        .spawn().expect(format!("{}", "Failed to go to stepper motor home foward.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to go to stepper motor home foward.".red()).as_str());
     }
     fn go_home_reverse() {
         Command::new("ticcmd").arg("--home").arg("rev")
-        .spawn().expect(format!("{}", "Failed to go to stepper motor home in reverse.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to go to stepper motor home in reverse.".red()).as_str());
     }
     fn reset_command_timeout() {
         Command::new("ticcmd").arg("--reset-command-timeout")
-        .spawn().expect(format!("{}", "Failed to reset stepper motor command timeout.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to reset stepper motor command timeout.".red()).as_str());
     }
     fn deenergize() {
         Command::new("ticcmd").arg("--deenergize")
-        .spawn().expect(format!("{}", "Failed to deenergize stepper motor.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to deenergize stepper motor.".red()).as_str());
     }
     fn energize() {
         Command::new("ticcmd").arg("--energize")
-        .spawn().expect(format!("{}", "Failed to energize stepper motor.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to energize stepper motor.".red()).as_str());
     }
     fn exit_safe_start() {
         Command::new("ticcmd").arg("--exit-safe-start")
-        .spawn().expect(format!("{}", "Failed to exit stepper motor safe start.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to exit stepper motor safe start.".red()).as_str());
     }
     fn enter_safe_start() {
         Command::new("ticcmd").arg("--enter-safe-start")
-        .spawn().expect(format!("{}", "Failed to enter stepper motor safe start.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to enter stepper motor safe start.".red()).as_str());
     }
     fn reset() {
         Command::new("ticcmd").arg("--reset")
-        .spawn().expect(format!("{}", "Failed to reset stepper motor driver.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to reset stepper motor driver.".red()).as_str());
     }
     fn clear_driver_error() {
         Command::new("ticcmd").arg("--clear-driver-error")
-        .spawn().expect(format!("{}", "Failed to clear stepper motor driver error.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to clear stepper motor driver error.".red()).as_str());
     }
     fn set_max_speed(speed: &u32) {
         Command::new("ticcmd").arg("--set-max-speed").arg(format!("{}", speed))
-        .spawn().expect(format!("{}", "Failed to set stepper motor max speed.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to set stepper motor max speed.".red()).as_str());
     }
     fn set_starting_speed(speed: &u32) {
         Command::new("ticcmd").arg("--set-starting-speed").arg(format!("{}", speed))
-        .spawn().expect(format!("{}", "Failed to set stepper motor starting speed.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to set stepper motor starting speed.".red()).as_str());
     }
     fn set_max_accel(accel: &u32) {
         Command::new("ticcmd").arg("--set-max-accel").arg(format!("{}", accel))
-        .spawn().expect(format!("{}", "Failed to set stepper motor max acceleration.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to set stepper motor max acceleration.".red()).as_str());
     }
     fn set_max_deccel(deccel: &u32) {
         Command::new("ticcmd").arg("--set-max-deccel").arg(format!("{}", deccel))
-        .spawn().expect(format!("{}", "Failed to set stepper motor max decceleration.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to set stepper motor max decceleration.".red()).as_str());
     }
     fn set_step_mode(mode: TicStepMode) {
         Command::new("ticcmd").arg("--step-mode").arg(format!("{}", mode))
-        .spawn().expect(format!("{}", "Failed to set stepper motor step mode.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to set stepper motor step mode.".red()).as_str());
     }
     fn set_current_limit(limit: &u16) {
         Command::new("ticcmd").arg("--set-current-limit").arg(format!("{}", limit))
-        .spawn().expect(format!("{}", "Failed to set stepper motor current limit.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to set stepper motor current limit.".red()).as_str());
     }
     fn save_settings() {
         Command::new("ticcmd").arg("--settings").arg("./src/rust_tests/stepper_motor_config.yaml")
-        .spawn().expect(format!("{}", "Failed to save stepper motor settings.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to save stepper motor settings.".red()).as_str());
     }
     fn load_settings() {
         Command::new("ticcmd").arg("--settings").arg("./src/rust_tests/stepper_motor_config.yaml")
-        .spawn().expect(format!("{}", "Failed to load stepper motor settings.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to load stepper motor settings.".red()).as_str());
     }
     fn status() {
         Command::new("ticcmd").arg("--status").arg("--full")
-        .spawn().expect(format!("{}", "Failed to get stepper motor driver status.".red()).to_str());
+        .spawn().expect(format!("{}", "Failed to get stepper motor driver status.".red()).as_str());
     }
     fn reached_top() -> Result<bool, Error> {
         todo!()
@@ -236,51 +232,42 @@ impl StepperMotorServer {
         TicDriver::energize();
         TicDriver::exit_safe_start();
         TicDriver::go_home_reverse();
-        while !TicDriver::reached_top() {
+        while !TicDriver::reached_top().unwrap() {
             TicDriver::reset_command_timeout();
         }
         TicDriver::halt_and_set_position(&0);
         TicDriver::deenergize();
         TicDriver::enter_safe_start();
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
-        let _server = {
-            _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
-                    let requested_displacement: Result<i32, Error> = request.position-TicDriver::get_current_position();
-                    match requested_displacement {
-                        Ok(i32) => {
-                            println!("New position requested!");
-                            if requested_displacement.unwrap() != 0 {
-                                let is_direction_downward: bool = requested_displacement.unwrap() > 0;
-                                TicDriver::clear_driver_error();
-                                TicDriver::energize();
-                                TicDriver::exit_safe_start();
-                                TicDriver::set_target_position_relative(&requested_displacement.unwrap());
-                                match is_direction_downward {
-                                    true => {
-                                        while !TicDriver::reached_bottom().unwrap() {
-                                            TicDriver::reset_command_timeout();
-                                        }
-                                    }
-                                    false => {
-                                        while !TicDriver::reached_top().unwrap() {
-                                            TicDriver::reset_command_timeout();
-                                        }
-                                    }
-                                }
-                                TicDriver::deenergize();
-                                TicDriver::enter_safe_start();
-                                science_interfaces_rs::srv::Position_Response{success: true, position: TicDriver::get_current_position().unwrap(), error: "" }
+        let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+            move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
+                let requested_displacement: i32 = request.position-TicDriver::get_current_position().unwrap();
+                println!("New position requested!");
+                if requested_displacement.unwrap() != 0 {
+                    let is_direction_downward: bool = requested_displacement > 0;
+                    TicDriver::clear_driver_error();
+                    TicDriver::energize();
+                    TicDriver::exit_safe_start();
+                    TicDriver::set_target_position_relative(&requested_displacement);
+                    match is_direction_downward {
+                        true => {
+                            while !TicDriver::reached_bottom().unwrap() {
+                                TicDriver::reset_command_timeout();
                             }
-                            science_interfaces_rs::srv::Position_Response{success: false, position: TicDriver::get_current_position().unwrap(), error: "Already at requested position.".yellow().to_string() }
-                        },
-                        Error => {
-                            science_interfaces_rs::srv::Position_Response{success: false, position: TicDriver::get_current_position().unwrap(), error: "Invalid request!".red().to_string() }
+                        }
+                        false => {
+                            while !TicDriver::reached_top().unwrap() {
+                                TicDriver::reset_command_timeout();
+                            }
                         }
                     }
-                },
-            )
-        };
+                    TicDriver::deenergize();
+                    TicDriver::enter_safe_start();
+                    science_interfaces_rs::srv::Position_Response{success: true, position: TicDriver::get_current_position().unwrap(), error: String::new() }
+                }
+                science_interfaces_rs::srv::Position_Response{success: false, position: TicDriver::get_current_position().unwrap(), error: "Already at requested position.".yellow().to_string() }
+            }
+        );
         let _subsystem = subsystem;
         let _device = device.replace("_", " ");
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server})
