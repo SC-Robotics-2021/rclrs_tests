@@ -14,7 +14,7 @@
   <depend>std_srvs</depend>
   <depend>colored</depend>
   <depend>input-macro</depend>
-  <depend>no-panic</depend>
+  <depend>rppal</depend>
 
 
   <export>

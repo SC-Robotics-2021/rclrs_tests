@@ -1,7 +1,8 @@
-use std::{sync::{Arc, Mutex}, thread, time, str::{ParseBoolError, ParseIntError}};
+use std::{sync::{Arc, Mutex}, env, thread, time, process::Command, str::ParseBoolError, num::ParseIntError};
 use science_interfaces_rs::srv::Position;
 use opencv::{prelude::*, highgui, videoio};
 use cv_bridge_rs::CvImage;
+use sensor_msgs::msg::Image;
 use std_srvs::srv::SetBool;
 use rppal::gpio::Gpio;
 use anyhow::{Result, Error};
@@ -11,7 +12,7 @@ pub struct GPIOServer {
     _node: rclrs::Node,
     _subsystem: String,
     _device: String,
-    _server: Arc<rclrs::Server<_>>,
+    _server: Arc<rclrs::Server<SetBool>>,
     _pin: Arc<Mutex<Gpio>>,
 }
 
@@ -23,7 +24,7 @@ impl GPIOServer {
         let _server = {
             _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
                 move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
-                    pin = *pin_clone.lock().unwrap();
+                    let pin = *pin_clone.lock().unwrap();
                     if request.data {
                         pin.set_high();
                         std_srvs::srv::SetBool_Response{success: true, message: format!("{} is on.", &device) }
@@ -46,7 +47,7 @@ pub struct CameraServer {
     _node: rclrs::Node,
     _subsystem: String,
     _device: String,
-    _server: Arc<rclrs::Server<_>>,
+    _server: Arc<rclrs::Server<SetBool>>,
     _publisher: Arc<rclrs::Publisher<Image>>,
     _cam: videoio::VideoCapture,
     _capture_delay: u8,
@@ -56,7 +57,7 @@ pub struct CameraServer {
 impl CameraServer {
     fn new(subsystem: String, device: String, camera_num: String, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
-        let _active = Arc::new(Mutex::(false));
+        let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&active);
         let _server = {
             _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
@@ -192,45 +193,45 @@ pub struct StepperMotorServer {
     _node: rclrs::Node,
     _subsystem: String,
     _device: String,
-    _server: Arc<rclrs::Server<_>>,
+    _server: Arc<rclrs::Server<Position>>,
 }
 
-impl ServerNode for StepperMotorServer {
+impl StepperMotorServer {
     fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _server = {
             _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces::srv::Position_Request| -> science_interfaces::srv::Position_Response {
-                    let requested_displacement: Result<i32, Error> = request.position-TicDriver.get_current_position()?;
+                move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
+                    let requested_displacement: Result<i32, Error> = request.position-TicDriver::get_current_position()?;
                     match requested_displacement {
                         Ok(i32) => {
                             println!("New position requested!");
                             if requested_displacement != 0 {
                                 let is_direction_downward: bool = (requested_displacement > 0);
-                                TicDriver.clear_driver_error();
-                                TicDriver.energize();
-                                TicDriver.exit_safe_start();
-                                TicDriver.set_target_position_relative(position_delta);
+                                TicDriver::clear_driver_error();
+                                TicDriver::energize();
+                                TicDriver::exit_safe_start();
+                                TicDriver::set_target_position_relative(position_delta);
                                 match is_direction_downward {
                                     true => {
-                                        while !TicDriver.reached_bottom() {
-                                            TicDriver.reset_command_timeout();
+                                        while !TicDriver::reached_bottom() {
+                                            TicDriver::reset_command_timeout();
                                         }
                                     }
                                     false => {
-                                        while !TicDriver.reached_top() {
-                                            TicDriver.reset_command_timeout();
+                                        while !TicDriver::reached_top() {
+                                            TicDriver::reset_command_timeout();
                                         }
                                     }
                                 }
-                                TicDriver.deenergize();
-                                TicDriver.enter_safe_start();
-                                science_interfaces::srv::Position_Response{success: true, position: TicDriver.get_current_position(), errors: "" }
+                                TicDriver::deenergize();
+                                TicDriver::enter_safe_start();
+                                science_interfaces_rs::srv::Position_Response{success: true, position: TicDriver::get_current_position(), errors: "" }
                             }
-                            science_interfaces::srv::Position_Response{success: false, position: TicDriver.get_current_position(), errors: "Already at requested position.".yellow()}
+                            science_interfaces_rs::srv::Position_Response{success: false, position: TicDriver::get_current_position(), errors: "Already at requested position.".yellow()}
                         },
                         Error => {
-                            science_interfaces::srv::Position_Response{success: false, position: TicDriver.get_current_position(), errors: "Invalid request!".red() }
+                            science_interfaces_rs::srv::Position_Response{success: false, position: TicDriver::get_current_position(), errors: "Invalid request!".red() }
                         }
                     }
                 }?
@@ -239,21 +240,21 @@ impl ServerNode for StepperMotorServer {
         let _subsystem = subsystem;
         let _device = &device.replace("_", " ");
         // Zero the platform's height
-        TicDriver.set_current_limit(3200);
-        TicDriver.set_current_limit(TicStepMode::Microstep256);
-        TicDriver.save_settings();
-        TicDriver.load_settings();
-        TicDriver.clear_driver_error();
-        TicDriver.clear_driver_error();
-        TicDriver.energize();
-        TicDriver.exit_safe_start();
-        TicDriver.go_home_reverse();
-        while !TicDriver.reached_top() {
-            TicDriver.reset_command_timeout();
+        TicDriver::set_current_limit(3200);
+        TicDriver::set_current_limit(TicStepMode::Microstep256);
+        TicDriver::save_settings();
+        TicDriver::load_settings();
+        TicDriver::clear_driver_error();
+        TicDriver::clear_driver_error();
+        TicDriver::energize();
+        TicDriver::exit_safe_start();
+        TicDriver::go_home_reverse();
+        while !TicDriver::reached_top() {
+            TicDriver::reset_command_timeout();
         }
-        TicDriver.halt_and_set_position(0);
-        TicDriver.deenergize();
-        TicDriver.enter_safe_start();
+        TicDriver::halt_and_set_position(0);
+        TicDriver::deenergize();
+        TicDriver::enter_safe_start();
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server})
     }
 
