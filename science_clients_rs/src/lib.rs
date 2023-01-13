@@ -39,7 +39,7 @@ impl OnOffClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            Ok(rclrs::spin(&self.as_ref()._node)?)
+            Ok(rclrs::spin(&self._node)?)
         });
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
@@ -51,7 +51,7 @@ impl OnOffClient {
                     ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
-            self.send_request(&state.as_ref()?);
+            self.send_request(&state?);
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed {
@@ -82,7 +82,7 @@ impl CameraClient {
         let _subscription = {
             _node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| {
-                    println!("Recieving new {} image!", &device.as_ref().replace("_", " "));
+                    println!("Recieving new {} image!", device.replace("_", " "));
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
                     if frame_clone.lock().unwrap().as_ref().unwrap().size().unwrap().width > 0 {
                         highgui::imshow(&device.as_str(), &frame_clone.lock().unwrap().as_ref().unwrap());
@@ -107,7 +107,7 @@ impl CameraClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            Ok(rclrs::spin(&self.as_ref()._node)?)
+            Ok(rclrs::spin(&self._node)?)
         });
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
@@ -119,7 +119,7 @@ impl CameraClient {
                     ParseBoolError => { input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
-            self.send_request(&state.as_ref()?);
+            self.send_request(&state?);
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed {
@@ -165,7 +165,7 @@ impl PositionClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            Ok(rclrs::spin(&self.as_ref()._node)?)
+            Ok(rclrs::spin(&self._node)?)
         });
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut position: Result<i32, ParseIntError>;
@@ -180,7 +180,7 @@ impl PositionClient {
                     ParseIntError => { position = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<i32>(); }
                 }
             }
-            self.send_request(&position.as_ref()?);
+            self.send_request(&position?);
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed {
