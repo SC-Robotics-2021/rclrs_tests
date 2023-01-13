@@ -146,7 +146,7 @@ impl PositionClient {
 
     async fn send_request(&self, position: &i32) -> Result<(), Error> {
         let request = science_interfaces_rs::srv::Position_Request{position: *position};
-        let future = self._client.call_async(&);
+        let future = self._client.call_async(&request);
         println!("Request sent to {}.", &self._device);
         let response = future.await?;
         match response.success {
