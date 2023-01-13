@@ -1,4 +1,4 @@
-use std::{env, sync::{Arc, Mutex}, str::{ParseBoolError, ParseIntError}};
+use std::{env, sync::{Arc, Mutex}, str::ParseBoolError, num::ParseIntError};
 use anyhow::{Result, Error};
 use input_macro::input;
 use colored::*;
@@ -20,18 +20,19 @@ impl OnOffClient {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
         let _client = _node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subsystem = subsystem;
-        let _device = &device.replace("_", " ").to_string();
+        let _device = device.replace("_", " ").to_string();
         Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client})
     }
 
-    fn send_request(&self, state: &bool) {
-        while !self._client.wait_for_service(timeout_sec=1.0) {
+    async fn send_request(&self, state: &bool) -> Result<(), Error> {
+        while !self._client.wait_for_service(1) {
             println!("The {} is not available. Waiting a second...", &self._device);
         }
         let future = self._client.call_async(&std_srvs::srv::SetBool_Request{data: *state});
         println!("Request sent to {}", &self._device);
         let response = future.await?;
-        println!(response.message);
+        println!("{}", response.message);
+        Ok(())
     }
 
     fn cli_control(&self) -> Result<(), Error> {
@@ -78,11 +79,11 @@ impl CameraClient {
         let _client = _node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subscription = {
             _node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
-                move |msg: Image| -> Result<Self, Error> {
+                move |msg: Image| {
                     println!("Recieving new {} image!", &device.replace("_", " "));
-                    *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()))
+                    *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
                     if *frame_clone.lock().unwrap().size()?.width > 0 {
-                        highgui::imshow(&device.as_str(), &frame_clone.lock().unwrap());
+                        highgui::imshow(&device.as_str(), &*frame_clone.lock().unwrap());
                     }
                     let _key = highgui::wait_key(10);
                 },
@@ -93,14 +94,15 @@ impl CameraClient {
         Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client, _subscription:_subscription, _frame:_frame})
     }
 
-    fn send_request(&self, state: &bool) {
-        while !self._client.wait_for_service(timeout_sec=1.0) {
+    async fn send_request(&self, state: &bool) -> Result<(), Error> {
+        while !self._client.wait_for_service(1) {
             println!("The {} is not available right now. Waiting a second...", &self._device);
         }
-        let future = self._client.call_async(&<std_srvs::srv::SetBool as Trait>::Request{data: *state});
+        let future = self._client.call_async(&std_srvs::srv::SetBool::Request{data: *state});
         println!("Request sent to {}", &self._device);
         let response = future.await?;
         println!("{}", response.message);
+        Ok(())
     }
 
     fn cli_control(&self) -> Result<(), Error> {
@@ -117,7 +119,7 @@ impl CameraClient {
                     ParseBoolError => { input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse(); }
                 }
             }
-            self.send_request(&state?)
+            self.send_request(&state?);
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse();
             loop {
                 match proceed {
@@ -146,13 +148,12 @@ impl PositionClient {
         Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client})
     }
 
-    fn send_request(&self, position: &i32) {
-        while !self._client.wait_for_service(timeout_sec=1.0) {
+    async fn send_request(&self, position: &i32) -> Result<(), Error> {
+        while !self._client.wait_for_service(1) {
             println!("The {} is not available right now. Waiting a second...", &self._device);
         }
-        let future = self._client.call_async(&<science_interfaces_rs::srv::Position as Trait>::Request{position: *position});
+        let future = self._client.call_async(&science_interfaces_rs::srv::Position::Request{position: *position});
         println!("Request sent to {}.", &self._device);
-        future.await;
         let response = future.await?;
         match response.success {
             true => { println!("Request completed. The {} is now at position {}.", &self._device, &response.position); },
@@ -161,6 +162,7 @@ impl PositionClient {
                 println!("{}", &response.error);
             }
         }
+        Ok(())
     }
 
     fn cli_control(&self) -> Result<(), Error> {
@@ -174,7 +176,7 @@ impl PositionClient {
             loop {
                 match position {
                     Ok(i32) => {
-                        if (position? < 0) { position = Ok(0); }
+                        if position? < 0 { position = Ok(0); }
                         break;
                     }
                     ParseIntError => { position = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse(); }
