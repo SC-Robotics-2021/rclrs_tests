@@ -25,7 +25,7 @@ impl OnOffClient {
     }
 
     async fn send_request(&self, state: &bool) -> Result<(), Error> {
-        while !self._client.unwrap()wait_for_service(1) {
+        while !self._client.unwrap().wait_for_service(1) {
             println!("The {} is not available. Waiting a second...", &self._device);
         }
         let future = self._client.call_async(&std_srvs::srv::SetBool_Request{data: *state});
@@ -95,7 +95,7 @@ impl CameraClient {
     }
 
     async fn send_request(&self, state: &bool) -> Result<(), Error> {
-        while !self._client.unwrap()wait_for_service(1) {
+        while !self._client.unwrap().wait_for_service(1) {
             println!("The {} is not available right now. Waiting a second...", &self._device);
         }
         let future = self._client.call_async(&std_srvs::srv::SetBool_Request{data: *state});
@@ -149,7 +149,7 @@ impl PositionClient {
     }
 
     async fn send_request(&self, position: &i32) -> Result<(), Error> {
-        while !self._client.unwrap()wait_for_service(1) {
+        while !self._client.unwrap().wait_for_service(1) {
             println!("The {} is not available right now. Waiting a second...", &self._device);
         }
         let future = self._client.call_async(&science_interfaces_rs::srv::Position_Request{position: *position});
