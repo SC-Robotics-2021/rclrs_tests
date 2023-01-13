@@ -12,7 +12,7 @@ pub struct OnOffClient {
     _subsystem: String,
     _device: String,
     _node: rclrs::Node,
-    _client: Arc<rclrs::Client<SetBool>>,
+    _client: rclrs::Client<SetBool>,
 }
 
 impl OnOffClient {
@@ -25,7 +25,7 @@ impl OnOffClient {
     }
 
     async fn send_request(&self, state: &bool) -> Result<(), Error> {
-        while !self._client.lock().unwrap().unwrap().wait_for_service(1) {
+        while !self._client.wait_for_service(1) {
             println!("The {} is not available. Waiting a second...", &self._device);
         }
         let future = self._client.call_async(&std_srvs::srv::SetBool_Request{data: *state});
@@ -66,7 +66,7 @@ pub struct CameraClient {
     _subsystem: String,
     _device: String,
     _node: rclrs::Node,
-    _client: Arc<rclrs::Client<SetBool>>,
+    _client: rclrs::Client<SetBool>,
     _subscription: Arc<rclrs::Subscription<Image>>,
     _frame: Arc<Mutex<Option<Mat>>>,
 }
@@ -95,7 +95,7 @@ impl CameraClient {
     }
 
     async fn send_request(&self, state: &bool) -> Result<(), Error> {
-        while !self._client.lock().unwrap().unwrap().wait_for_service(1) {
+        while !self._client.wait_for_service(1) {
             println!("The {} is not available right now. Waiting a second...", &self._device);
         }
         let future = self._client.call_async(&std_srvs::srv::SetBool_Request{data: *state});
@@ -136,7 +136,7 @@ pub struct PositionClient {
     _subsystem: String,
     _device: String,
     _node: rclrs::Node,
-    _client: Arc<rclrs::Client<Position>>,
+    _client: rclrs::Client<Position>,
 }
 
 impl PositionClient {
@@ -149,7 +149,7 @@ impl PositionClient {
     }
 
     async fn send_request(&self, position: &i32) -> Result<(), Error> {
-        while !self._client.lock().unwrap().unwrap().wait_for_service(1) {
+        while !self._client.wait_for_service(1) {
             println!("The {} is not available right now. Waiting a second...", &self._device);
         }
         let future = self._client.call_async(&science_interfaces_rs::srv::Position_Request{position: *position});
