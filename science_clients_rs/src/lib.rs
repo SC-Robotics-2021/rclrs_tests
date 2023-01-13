@@ -8,6 +8,10 @@ use std_srvs::srv::SetBool;
 use science_interfaces_rs::srv::Position;
 use sensor_msgs::msg::Image;
 
+pub trait ClientExecution {
+    fn new()
+}
+
 pub struct OnOffClient {
     _subsystem: String,
     _device: String,
@@ -35,7 +39,7 @@ impl OnOffClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            Ok(rclrs::spin(&self._node)?)
+            Ok(rclrs::spin(&self.as_ref()._node)?)
         });
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
@@ -47,7 +51,7 @@ impl OnOffClient {
                     ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
-            self.send_request(&state?);
+            self.send_request(&state.as_ref()?);
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed {
@@ -78,10 +82,10 @@ impl CameraClient {
         let _subscription = {
             _node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| {
-                    println!("Recieving new {} image!", &device.replace("_", " "));
+                    println!("Recieving new {} image!", &device.as_ref().replace("_", " "));
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
-                    if frame_clone.lock().unwrap().unwrap().size().unwrap().width > 0 {
-                        highgui::imshow(&device.as_str(), &frame_clone.lock().unwrap().unwrap());
+                    if frame_clone.lock().unwrap().as_ref().unwrap().size().unwrap().width > 0 {
+                        highgui::imshow(&device.as_str(), &frame_clone.lock().unwrap().as_ref().unwrap());
                     }
                     let _key = highgui::wait_key(10);
                 },
@@ -103,7 +107,7 @@ impl CameraClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            Ok(rclrs::spin(&self._node)?)
+            Ok(rclrs::spin(&self.as_ref()._node)?)
         });
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
@@ -115,7 +119,7 @@ impl CameraClient {
                     ParseBoolError => { input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
-            self.send_request(&state?);
+            self.send_request(&state.as_ref()?);
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed {
@@ -161,7 +165,7 @@ impl PositionClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         std::thread::spawn(move || -> Result<(), Error> {
-            Ok(rclrs::spin(&self._node)?)
+            Ok(rclrs::spin(&self.as_ref()._node)?)
         });
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut position: Result<i32, ParseIntError>;
@@ -170,13 +174,13 @@ impl PositionClient {
             loop {
                 match position {
                     Ok(i32) => {
-                        if position? < 0 { position = Ok(0); }
+                        if &position? < 0 { position = Ok(0); }
                         break;
                     }
                     ParseIntError => { position = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<i32>(); }
                 }
             }
-            self.send_request(&position?);
+            self.send_request(&position.as_ref()?);
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed {
