@@ -22,14 +22,14 @@ impl GPIOServer {
         let pin_clone =  Arc::clone(&_pin);
         let _server = {
             _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool::Request| -> std_srvs::srv::SetBool::Response {
+                move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                     pin = *pin_clone.lock().unwrap();
                     if request.data {
                         pin.set_high();
-                        SetBool::Response {success: true, message: format!("{} is on.", &device) }
+                        std_srvs::srv::SetBool_Response{success: true, message: format!("{} is on.", &device) }
                     }
                     pin.set_low();
-                    SetBool::Response {success: true, message: format!("{} is off.", &device) }
+                    std_srvs::srv::SetBool_Response{success: true, message: format!("{} is off.", &device) }
             }?)
         };
         let _subsystem = subsystem;
@@ -60,12 +60,12 @@ impl CameraServer {
         let active_clone =  Arc::clone(&active);
         let _server = {
             _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool::Request| -> std_srvs::srv::SetBool::Response {
+                move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                     if request.data == *active_clone.lock().unwrap() {
-                        SetBool::Response {success: true, message: format!("{} is already in requested state.", &device).yellow() }
+                        std_srvs::srv::SetBool_Response{success: true, message: format!("{} is already in requested state.", &device).yellow() }
                     }
                     *active_clone.lock().unwrap() = request.data;
-                    SetBool::Response {success: true, message: format!("{} is now in requested state.", &device) }
+                    std_srvs::srv::SetBool_Response{success: true, message: format!("{} is now in requested state.", &device) }
             }?)
         };
         let _publisher = _node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
@@ -200,7 +200,7 @@ impl ServerNode for StepperMotorServer {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _server = {
             _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
-                move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces::srv::Position::Request| -> science_interfaces::srv::Position::Response {
+                move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces::srv::Position_Request| -> science_interfaces::srv::Position_Response {
                     let requested_displacement: Result<i32, Error> = request.position-TicDriver.get_current_position()?;
                     match requested_displacement {
                         Ok(i32) => {
@@ -225,12 +225,12 @@ impl ServerNode for StepperMotorServer {
                                 }
                                 TicDriver.deenergize();
                                 TicDriver.enter_safe_start();
-                                Position::Response {success: true, position: TicDriver.get_current_position(), errors: "" }
+                                science_interfaces::srv::Position_Response{success: true, position: TicDriver.get_current_position(), errors: "" }
                             }
-                            Position::Response{success: false, position: TicDriver.get_current_position(), errors: "Already at requested position.".yellow()}
+                            science_interfaces::srv::Position_Response{success: false, position: TicDriver.get_current_position(), errors: "Already at requested position.".yellow()}
                         },
                         Error => {
-                            Position::Response{success: false, position: TicDriver.get_current_position(), errors: "Invalid request!".red() }
+                            science_interfaces::srv::Position_Response{success: false, position: TicDriver.get_current_position(), errors: "Invalid request!".red() }
                         }
                     }
                 }?

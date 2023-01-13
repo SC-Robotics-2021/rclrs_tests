@@ -42,19 +42,19 @@ impl OnOffClient {
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
         while proceed? {
-            state = input!("Enter a command for the {} (on => {} | off => {}): ", &self._device, "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse();
+            state = input!("Enter a command for the {} (on => {} | off => {}): ", &self._device, "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match state {
                     Ok(bool) => { break; }
-                    ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse(); }
+                    ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
             self.send_request(&state?);
-            proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse();
+            proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed {
                     Ok(bool) => { break; }
-                    ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse(); }
+                    ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
         }
@@ -68,7 +68,7 @@ pub struct CameraClient {
     _node: rclrs::Node,
     _client: Arc<rclrs::Client<SetBool>>,
     _subscription: Arc<rclrs::Subscription<Image>>,
-    _frame: Arc<Mutex<Option<CvImage>>>,
+    _frame: Arc<Mutex<Option<Mat>>>,
 }
 
 impl CameraClient {
@@ -82,8 +82,8 @@ impl CameraClient {
                 move |msg: Image| {
                     println!("Recieving new {} image!", &device.replace("_", " "));
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
-                    if *frame_clone.lock().unwrap().size()?.width > 0 {
-                        highgui::imshow(&device.as_str(), &*frame_clone.lock().unwrap());
+                    if *frame_clone.lock().unwrap().size().unwrap().width > 0 {
+                        highgui::imshow(&device.as_str(), &*frame_clone.lock().unwrap().unwrap());
                     }
                     let _key = highgui::wait_key(10);
                 },
@@ -98,7 +98,7 @@ impl CameraClient {
         while !self._client.wait_for_service(1) {
             println!("The {} is not available right now. Waiting a second...", &self._device);
         }
-        let future = self._client.call_async(&std_srvs::srv::SetBool::Request{data: *state});
+        let future = self._client.call_async(&std_srvs::srv::SetBool_Request{data: *state});
         println!("Request sent to {}", &self._device);
         let response = future.await?;
         println!("{}", response.message);
@@ -112,19 +112,19 @@ impl CameraClient {
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
         while proceed? {
-            state = input!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse();
+            state = input!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match state {
                     Ok(bool) => { break; }
-                    ParseBoolError => { input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse(); }
+                    ParseBoolError => { input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
             self.send_request(&state?);
-            proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse();
+            proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed {
                     Ok(bool) => { break; }
-                    ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse(); }
+                    ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
         }
@@ -144,7 +144,7 @@ impl PositionClient {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
         let _client = _node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subsystem = subsystem;
-        let _device = &device.replace("_", " ").to_string();
+        let _device = device.replace("_", " ").to_string();
         Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client})
     }
 
@@ -152,7 +152,7 @@ impl PositionClient {
         while !self._client.wait_for_service(1) {
             println!("The {} is not available right now. Waiting a second...", &self._device);
         }
-        let future = self._client.call_async(&science_interfaces_rs::srv::Position::Request{position: *position});
+        let future = self._client.call_async(&science_interfaces_rs::srv::Position_Request{position: *position});
         println!("Request sent to {}.", &self._device);
         let response = future.await?;
         match response.success {
@@ -172,22 +172,22 @@ impl PositionClient {
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut position: Result<i32, ParseIntError>;
         while proceed? {
-            position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse();
+            position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>();
             loop {
                 match position {
                     Ok(i32) => {
                         if position? < 0 { position = Ok(0); }
                         break;
                     }
-                    ParseIntError => { position = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse(); }
+                    ParseIntError => { position = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<i32>(); }
                 }
             }
             self.send_request(&position?);
-            proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse();
+            proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed {
                     Ok(bool) => { break; }
-                    ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse(); }
+                    ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
         }
