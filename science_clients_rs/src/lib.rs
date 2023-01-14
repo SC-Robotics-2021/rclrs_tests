@@ -47,7 +47,7 @@ impl OnOffClient {
                     ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
-            self.send_request(state.unwrap().as_ref());
+            self.send_request(state.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed? {
@@ -115,7 +115,7 @@ impl CameraClient {
                     ParseBoolError => { input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
-            self.send_request(state.unwrap().as_ref());
+            self.send_request(state.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed? {
@@ -153,7 +153,7 @@ impl PositionClient {
             true => { println!("Request completed. The {} is now at position {}.", &self._device, &response.position); },
             false => {
                 println!("Request failed! The {} stopped at {}.", &self._device, &response.position);
-                println!("{}", &response.error);
+                println!("{}", &response.message);
             }
         }
         Ok(())
@@ -169,14 +169,17 @@ impl PositionClient {
             position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>();
             loop {
                 match position? {
-                    i32 => {
-                        if < 0 { position = Ok(0); }
+                    d if d < 0 => {
+                        position = Ok(0); 
+                        break;
+                    }
+                    d if d >= 0 => {
                         break;
                     }
                     ParseIntError => { position = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<i32>(); }
                 }
             }
-            self.send_request(position.unwrap().as_ref());
+            self.send_request(position.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match proceed? {
