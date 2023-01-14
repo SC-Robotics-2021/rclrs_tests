@@ -50,7 +50,7 @@ impl GPIOServer {
 pub struct CameraServer {
     _node: Arc<Mutex<rclrs::Node>>,
     _server: Arc<rclrs::Service<SetBool>>,
-    _publisher: rclrs::Publisher<Image>,
+    _publisher: Arc<Mutex<rclrs::Publisher<Image>>,
     _cam: videoio::VideoCapture,
     _capture_delay: Arc<Mutex<u64>>,
     _active: Arc<Mutex<bool>>
@@ -61,7 +61,7 @@ impl CameraServer {
         let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _publisher = node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
+        let _publisher = Arc::new(Mutex::new(node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?));
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
@@ -94,7 +94,9 @@ impl CameraServer {
         });
         let active_clone = Arc::clone(&self._active);
         let delay_clone = Arc::clone(&self._capture_delay);
+        let publisher_clone = Arc::clone(&self._publisher);
         let publisher_thread = std::thread::spawn(move || {
+            let publisher = *publisher_clone.lock().unwrap();
             let active = *active_clone.lock().unwrap();
             let delay = *delay_clone.lock().unwrap();
             loop {
@@ -102,14 +104,11 @@ impl CameraServer {
                     let mut frame = Mat::default();
                     self._cam.read(&mut frame);
                     println!("Publishing frame!");
-                    self._publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
+                    publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
                     std::thread::sleep(std::time::Duration::from_millis(delay));
                 }
             }
         });
-
-        node_thread.join().expect("Unable to join node thread");
-        publisher_thread.join().expect("Unable to join publisher thread");
     }
 }
 
@@ -296,6 +295,5 @@ impl StepperMotorServer {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        node_thread.join().expect("Unable to join node thread");
     }
 }

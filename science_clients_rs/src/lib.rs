@@ -37,7 +37,6 @@ impl OnOffClient {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        node_thread.join().expect("Unable to join node thread");
     }
 
     fn cli_control(&self) -> Result<(), Error> {
@@ -114,7 +113,6 @@ impl CameraClient {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        node_thread.join().expect("Unable to join node thread");
     }
 
     fn cli_control(&self) -> Result<(), Error> {
@@ -181,7 +179,6 @@ impl PositionClient {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        node_thread.join().expect("Unable to join node thread");
     }
 
     fn cli_control(&self) -> Result<(), Error> {
