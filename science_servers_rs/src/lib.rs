@@ -37,8 +37,8 @@ impl GPIOServer {
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server, _pin:_pin})
     }
 
-    fn run(&self) -> Result<(), Error> {
-        Ok(rclrs::spin(&self._node)?)
+    fn run(&self) {
+        rclrs::spin(&self._node);
     }
 }
 
@@ -77,22 +77,22 @@ impl CameraServer {
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
     }
 
-    fn run(&self) -> Result<(), Error> {
+    fn run(&self) {
         let active_clone = Arc::clone(&self._active);
-        std::thread::spawn(move || -> Result<(), Error> {
-            let active = *active_clone.lock().unwrap();
-            loop {
-                if active {
-                    let mut frame = Mat::default();
-                    self._cam.read(&mut frame)?;
-                    println!("Publishing frame!");
-                    self._publisher.publish(CvImage::from_cvmat(frame).into_imgmsg())?;
-                    std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
+        std::thread::spawn(|| {
+                let active = *active_clone.lock().unwrap();
+                loop {
+                    if active {
+                        let mut frame = Mat::default();
+                        self._cam.read(&mut frame);
+                        println!("Publishing frame!");
+                        self._publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
+                        std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
+                    }
                 }
             }
-            Ok(())
-        });
-        Ok(rclrs::spin(&self._node)?)
+        );
+        rclrs::spin(&self._node);
     }
 }
 
@@ -271,7 +271,7 @@ impl StepperMotorServer {
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server})
     }
 
-    fn run(&self) -> Result<(), Error> {
-        Ok(rclrs::spin(&self._node)?)
+    fn run(&self) {
+        rclrs::spin(&self._node);
     }
 }
