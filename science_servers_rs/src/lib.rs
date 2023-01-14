@@ -15,7 +15,7 @@ pub struct GPIOServer {
 }
 
 impl GPIOServer {
-    fn new(&self, subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
+    fn new(subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -39,7 +39,7 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&self._node);
+        let node_clone = Arc::clone(self._node);
         std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
@@ -87,14 +87,14 @@ impl CameraServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&self._node);
+        let node_clone = Arc::clone(self._node);
         let node_thread = std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        let active_clone = Arc::clone(&self._active);
-        let delay_clone = Arc::clone(&self._capture_delay);
-        let publisher_clone = Arc::clone(&self._publisher);
+        let active_clone = Arc::clone(self._active);
+        let delay_clone = Arc::clone(self._capture_delay);
+        let publisher_clone = Arc::clone(self._publisher);
         let publisher_thread = std::thread::spawn(move || {
             let publisher = *publisher_clone.lock().unwrap();
             let active = *active_clone.lock().unwrap();
@@ -290,7 +290,7 @@ impl StepperMotorServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&self._node);
+        let node_clone = Arc::clone(self._node);
         let node_thread = std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
