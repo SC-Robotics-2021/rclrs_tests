@@ -46,8 +46,8 @@ impl OnOffClient {
         while proceed {
             loop {
                 match input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    Ok(a) => {
-                        state = a;
+                    x if type(x) == bool => {
+                        state = x;
                         break;
                     }
                     ParseBoolError => { continue; }
@@ -56,8 +56,8 @@ impl OnOffClient {
             self.send_request(&state);
             loop {
                 match input!("Enter {} to continue inputing commands, otherwise enter {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    Ok(b) => {
-                        proceed = b;
+                    x if type(x) == bool => {
+                        proceed = x;
                         break;
                     }
                     ParseBoolError => { continue; }
@@ -122,8 +122,8 @@ impl CameraClient {
         while proceed {
             loop {
                 match input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    Ok(a) => {
-                        state = a;
+                    x if type(x) == bool => {
+                        state = x;
                         break;
                     }
                     ParseBoolError => { continue; }
@@ -132,8 +132,8 @@ impl CameraClient {
             self.send_request(&state);
             loop {
                 match input!("Enter {} to continue inputing commands, otherwise enter {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    Ok(b) => {
-                        proceed = b;
+                    x if type(x) == bool => {
+                        proceed = x;
                         break;
                     }
                     ParseBoolError => { continue; }
@@ -188,12 +188,12 @@ impl PositionClient {
         while proceed {
             loop {
                 match input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>()? {
-                    a if a < 0 => {
+                    x if x < 0 => {
                         position = 0;
                         break;
                     }
-                    b if b >= 0 => {
-                        position = b;
+                    y if y >= 0 => {
+                        position = y;
                         break;
                     }
                     ParseIntError => { continue; }
@@ -202,8 +202,8 @@ impl PositionClient {
             self.send_request(&position);
             loop {
                 match input!("Enter {} to continue inputing commands, otherwise enter {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    Ok(c) => {
-                        proceed = c;
+                    x if type(x) == bool => {
+                        proceed = x;
                         break;
                     }
                     ParseBoolError => { continue; }
