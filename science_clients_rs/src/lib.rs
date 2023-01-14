@@ -9,8 +9,6 @@ use science_interfaces_rs::srv::Position;
 use sensor_msgs::msg::Image;
 
 pub struct OnOffClient {
-    _subsystem: String,
-    _device: String,
     _node: Arc<Mutex<rclrs::Node>>,
     _client: Arc<rclrs::Client<SetBool>>
 }
@@ -21,15 +19,13 @@ impl OnOffClient {
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
         let _client = node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
-        let _subsystem = subsystem;
-        let _device = device.replace("_", " ").to_string();
-        Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client})
+        Ok(Self{_node:_node, _client:_client})
     }
 
     async fn send_request(&self, state: &bool) -> Result<(), Error> {
         let request = std_srvs::srv::SetBool_Request{data: *state};
         let future = self._client.call_async(&request);
-        println!("Request sent to {}", &self._device);
+        println!("Request sent.");
         let response = future.await?;
         println!("{}", response.message);
         Ok(())
@@ -47,10 +43,10 @@ impl OnOffClient {
         self.run();
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
-        while proceed? {
-            state = input!("Enter a command for the {} (on => {} | off => {}): ", &self._device, "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
+        while &proceed? {
+            state = input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match state.as_ref()? {
+                match &state? {
                     bool => { break; }
                     ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
@@ -58,7 +54,7 @@ impl OnOffClient {
             self.send_request(state.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed.as_ref()? {
+                match &proceed? {
                     bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
@@ -69,8 +65,6 @@ impl OnOffClient {
 }
 
 pub struct CameraClient {
-    _subsystem: String,
-    _device: String,
     _node: Arc<Mutex<rclrs::Node>>,
     _client: Arc<rclrs::Client<SetBool>>,
     _subscription: Arc<rclrs::Subscription<Image>>,
@@ -88,24 +82,22 @@ impl CameraClient {
         let _subscription = {
             node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| {
-                    println!("Recieving new {} image!", device.replace("_", " "));
+                    println!("Recieving new image!");
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
                     if frame_clone.lock().unwrap().as_ref().unwrap().size().unwrap().width > 0 {
-                        highgui::imshow(&device.as_str(), &frame_clone.lock().unwrap().as_ref().unwrap());
+                        highgui::imshow(&device.replace("_", " "), &frame_clone.lock().unwrap().as_ref().unwrap());
                     }
                     let _key = highgui::wait_key(10);
                 },
             )?
         };
-        let _subsystem = subsystem;
-        let _device = device.replace("_", " ").to_string();
-        Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client, _subscription:_subscription, _frame:_frame})
+        Ok(Self{_node:_node, _client:_client, _subscription:_subscription, _frame:_frame})
     }
 
     async fn send_request(&self, state: &bool) -> Result<(), Error> {
         let request = std_srvs::srv::SetBool_Request{data: *state};
         let future = self._client.call_async(&request);
-        println!("Request sent to {}", &self._device);
+        println!("Request sent.");
         let response = future.await?;
         println!("{}", response.message);
         Ok(())
@@ -123,10 +115,10 @@ impl CameraClient {
         self.run();
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
-        while proceed? {
-            state = input!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse::<bool>();
+        while &proceed? {
+            state = input!("Enter a command ({} | {}): ", "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match state.as_ref()? {
+                match &state? {
                     bool => { break; }
                     ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
@@ -134,7 +126,7 @@ impl CameraClient {
             self.send_request(state.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed.as_ref()? {
+                match &proceed? {
                     bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
@@ -145,8 +137,6 @@ impl CameraClient {
 }
 
 pub struct PositionClient {
-    _subsystem: String,
-    _device: String,
     _node: Arc<Mutex<rclrs::Node>>,
     _client: Arc<rclrs::Client<Position>>
 }
@@ -157,20 +147,18 @@ impl PositionClient {
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
         let _client = node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
-        let _subsystem = subsystem;
-        let _device = device.replace("_", " ").to_string();
-        Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client})
+        Ok(Self{_node:_node, _client:_client})
     }
 
     async fn send_request(&self, position: &i32) -> Result<(), Error> {
         let request = science_interfaces_rs::srv::Position_Request{position: *position};
         let future = self._client.call_async(&request);
-        println!("Request sent to {}.", &self._device);
+        println!("Request sent.");
         let response = future.await?;
         match response.success {
-            true => { println!("Request completed. The {} is now at position {}.", &self._device, &response.position); },
+            true => { println!("Request completed. Now at position {}.", &response.position); },
             false => {
-                println!("Request failed! The {} stopped at {}.", &self._device, &response.position);
+                println!("Request failed! Stopped at {}.", &response.position);
                 println!("{}", &response.message);
             }
         }
@@ -189,10 +177,10 @@ impl PositionClient {
         self.run();
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut position: Result<i32, ParseIntError>;
-        while proceed? {
+        while &proceed? {
             position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>();
             loop {
-                match position.as_ref()? {
+                match &position? {
                     d if d < &0 => {
                         position = Ok(0); 
                         break;
@@ -206,7 +194,7 @@ impl PositionClient {
             self.send_request(position.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed.as_ref()? {
+                match &proceed? {
                     bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }

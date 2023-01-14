@@ -9,8 +9,6 @@ use anyhow::{Result, Error};
 use colored::*;
 
 pub struct GPIOServer {
-    _subsystem: String,
-    _device: String,
     _node: Arc<Mutex<rclrs::Node>>,
     _server: Arc<rclrs::Service<SetBool>>,
     _pin: Arc<Mutex<OutputPin>>
@@ -37,9 +35,7 @@ impl GPIOServer {
                 std_srvs::srv::SetBool_Response{success: true, message: message }
             }
         )?;
-        let _subsystem = subsystem;
-        let _device = device.replace("_", " ");
-        Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server, _pin:_pin})
+        Ok(Self{_node:_node, _server:_server, _pin:_pin})
     }
 
     fn run(&self) {
@@ -52,13 +48,11 @@ impl GPIOServer {
 }
 
 pub struct CameraServer {
-    _subsystem: String,
-    _device: String,
     _node: Arc<Mutex<rclrs::Node>>,
     _server: Arc<rclrs::Service<SetBool>>,
     _publisher: rclrs::Publisher<Image>,
     _cam: videoio::VideoCapture,
-    _capture_delay: u64,
+    _capture_delay: Arc<Mutex<u64>>,
     _active: Arc<Mutex<bool>>
 }
 
@@ -67,6 +61,7 @@ impl CameraServer {
         let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
+        let _publisher = node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
@@ -84,14 +79,11 @@ impl CameraServer {
                 std_srvs::srv::SetBool_Response{success: success, message: message}
             }
         )?;
-        let _publisher = node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
         let _cam = videoio::VideoCapture::new(camera_num.into(), videoio::CAP_ANY)?;
         _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
         _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
-        let _capture_delay = capture_delay.into(); 
-        let _subsystem = subsystem;
-        let _device = device.replace("_", " ");
-        Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
+        let _capture_delay = Arc::new(Mutex::new(capture_delay.into())); 
+        Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
     }
 
     fn run(&self) {
@@ -101,18 +93,20 @@ impl CameraServer {
             rclrs::spin(&node);
         });
         let active_clone = Arc::clone(&self._active);
+        let delay_clone = Arc::clone(&self._capture_delay);
         std::thread::spawn(move || {
-                let active = *active_clone.lock().unwrap();
-                loop {
-                    if active {
-                        let mut frame = Mat::default();
-                        self._cam.read(&mut frame);
-                        println!("Publishing frame!");
-                        self._publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                        std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
-                    }
+            let active = *active_clone.lock().unwrap();
+            let delay = *delay_clone.lock().unwrap();
+            loop {
+                if active {
+                    let mut frame = Mat::default();
+                    self._cam.read(&mut frame);
+                    println!("Publishing frame!");
+                    self._publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
+                    std::thread::sleep(std::time::Duration::from_millis(&delay));
                 }
-            });
+            }
+        });
     }
 }
 
@@ -235,8 +229,6 @@ impl TicDriver {
 }
 
 pub struct StepperMotorServer {
-    _subsystem: String,
-    _device: String,
     _node: Arc<Mutex<rclrs::Node>>,
     _server: Arc<rclrs::Service<Position>>
 }
@@ -292,9 +284,7 @@ impl StepperMotorServer {
                 science_interfaces_rs::srv::Position_Response{success: success, position: TicDriver::get_current_position().unwrap(), message: message}
             }
         )?;
-        let _subsystem = subsystem;
-        let _device = device.replace("_", " ");
-        Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server})
+        Ok(Self{_node:_node, _server:_server})
     }
 
     fn run(&self) {
