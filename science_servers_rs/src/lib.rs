@@ -24,12 +24,15 @@ impl GPIOServer {
         let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                 let pin = *pin_clone.lock().unwrap();
+                let mut message: String;
                 if request.data {
                     pin.set_high();
-                    std_srvs::srv::SetBool_Response{success: true, message: format!("{} is on.", &device)}
+                    message = format!("{} is on.", &device);
+                } else {
+                    pin.set_low();
+                    message = format!("{} is off.", &device);
                 }
-                pin.set_low();
-                std_srvs::srv::SetBool_Response{success: true, message: format!("{} is off.", &device)}
+                std_srvs::srv::SetBool_Response{success: true, message: message }
             }
         )?;
         let _subsystem = subsystem;
@@ -60,14 +63,17 @@ impl CameraServer {
         let active_clone =  Arc::clone(&_active);
         let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
-                let mut message: String = String::new();
-                if request.data == *active_clone.lock().unwrap() {
-                    message = format!("{} is already in requested state.", &device).yellow().to_string();
-                } else {
+                let mut message: String;
+                let success: bool = true;
+                if request.data != *active_clone.lock().unwrap() {
+                    *active_clone.lock().unwrap() = request.data;
                     message = format!("{} is now in requested state.", &device).to_string();
+
+                } else {
+                    success = false;
+                    message = format!("{} is already in requested state.", &device).yellow().to_string();
                 }
-                *active_clone.lock().unwrap() = request.data;
-                std_srvs::srv::SetBool_Response{success: true, message: message }
+                std_srvs::srv::SetBool_Response{success: success, message: message}
             }
         )?;
         let _publisher = _node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
@@ -245,8 +251,10 @@ impl StepperMotorServer {
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
-                let requested_displacement: i32 = request.position-TicDriver::get_current_position().unwrap();
+                let mut success: bool = true;
+                let mut message: String = String::new();
                 println!("New position requested!");
+                let requested_displacement: i32 = request.position-TicDriver::get_current_position().unwrap();
                 if requested_displacement != 0 {
                     let is_direction_downward: bool = requested_displacement > 0;
                     TicDriver::clear_driver_error();
@@ -264,9 +272,11 @@ impl StepperMotorServer {
                     }
                     TicDriver::deenergize();
                     TicDriver::enter_safe_start();
-                    science_interfaces_rs::srv::Position_Response{success: true, position: TicDriver::get_current_position().unwrap(), error: String::new()}
+                } else {
+                    success = false;
+                    message = "Already at requested position.".yellow().to_string();
                 }
-                science_interfaces_rs::srv::Position_Response{success: false, position: TicDriver::get_current_position().unwrap(), error: "Already at requested position.".yellow().to_string()}
+                science_interfaces_rs::srv::Position_Response{success: success, position: TicDriver::get_current_position().unwrap(), message: message}
             }
         )?;
         let _subsystem = subsystem;

@@ -34,24 +34,24 @@ impl OnOffClient {
     }
 
     fn cli_control(&self) -> Result<(), Error> {
-        std::thread::spawn(move || -> Result<(), Error> {
-            Ok(rclrs::spin(&self._node)?)
+        std::thread::spawn(|| {
+            rclrs::spin(&self._node);
         });
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
         while proceed? {
             state = input!("Enter a command for the {} (on => {} | off => {}): ", &self._device, "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match state {
-                    Ok(bool) => { break; }
+                match state? {
+                    bool => { break; }
                     ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
-            self.send_request(&state?);
+            self.send_request(state.unwrap().as_ref());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed {
-                    Ok(bool) => { break; }
+                match proceed? {
+                    bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
@@ -102,24 +102,24 @@ impl CameraClient {
     }
 
     fn cli_control(&self) -> Result<(), Error> {
-        std::thread::spawn(move || -> Result<(), Error> {
-            Ok(rclrs::spin(&self._node)?)
+        std::thread::spawn(|| {
+            rclrs::spin(&self._node);
         });
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
         while proceed? {
             state = input!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match state {
-                    Ok(bool) => { break; }
+                match state? {
+                    bool => { break; }
                     ParseBoolError => { input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
-            self.send_request(&state?);
+            self.send_request(state.unwrap().as_ref());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed {
-                    Ok(bool) => { break; }
+                match proceed? {
+                    bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
@@ -160,27 +160,27 @@ impl PositionClient {
     }
 
     fn cli_control(&self) -> Result<(), Error> {
-        std::thread::spawn(move || -> Result<(), Error> {
-            Ok(rclrs::spin(&self._node)?)
+        std::thread::spawn(|| {
+            rclrs::spin(&self._node);
         });
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut position: Result<i32, ParseIntError>;
         while proceed? {
             position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>();
             loop {
-                match position {
-                    Ok(i32) => {
-                        if &position? < &0 { position = Ok(0); }
+                match position? {
+                    i32 => {
+                        if < 0 { position = Ok(0); }
                         break;
                     }
                     ParseIntError => { position = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<i32>(); }
                 }
             }
-            self.send_request(&position?);
+            self.send_request(position.unwrap().as_ref());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed {
-                    Ok(bool) => { break; }
+                match proceed? {
+                    bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
