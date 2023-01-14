@@ -8,6 +8,8 @@ use std_srvs::srv::SetBool;
 use science_interfaces_rs::srv::Position;
 use sensor_msgs::msg::Image;
 use dialoguer::{Select, Confirm};
+use console::Term;
+
 
 pub struct OnOffClient {
     _node: Arc<Mutex<rclrs::Node>>,
@@ -44,7 +46,7 @@ impl OnOffClient {
         self.run();
         let mut proceed: bool = true;
         while proceed {
-            match Select::new().item("Turn off").item("Turn on").interact()? {
+            match Select::new().item("Turn off").item("Turn on").interact_on_opt(&Term::stdout())? {
                 Some(input) => self.send_request(input as bool);
                 None => unreachable!();
             }
@@ -105,7 +107,7 @@ impl CameraClient {
         self.run();
         let mut proceed: bool = true;
         while proceed {
-            match Select::new().item("Turn off").item("Turn on").interact()? {
+            match Select::new().item("Turn off").item("Turn on").interact_on_opt(&Term::stdout())? {
                 Some(input) => self.send_request(input as bool);
                 None => unreachable!();
             }
