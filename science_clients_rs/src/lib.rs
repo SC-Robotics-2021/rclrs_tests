@@ -41,22 +41,26 @@ impl OnOffClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        let mut proceed: Result<bool, ParseBoolError  + 'static> = Ok(true);
-        let mut state : Result<bool, ParseBoolError + 'static>;
-        while proceed? {
-            state = input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()?;
+        let mut proceed: bool + 'static = true;
+        let mut state: bool + 'static;
+        while proceed {
             loop {
-                match state {
-                    Ok(bool) => { break; }
-                    ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>()?; }
+                match input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
+                    Ok(a) => {
+                        state = a;
+                        break;
+                    }
+                    ParseIntError => { continue; }
                 }
             }
-            self.send_request(&state?);
-            proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse::<bool>()?;
+            self.send_request(&state);
             loop {
-                match proceed {
-                    Ok(bool) => { break; }
-                    ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>()?; }
+                match input!("Enter {} to continue inputing commands, otherwise enter {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
+                    Ok(b) => {
+                        proceed = b;
+                        break;
+                    }
+                    ParseBoolError => { continue; }
                 }
             }
         }
@@ -113,22 +117,26 @@ impl CameraClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        let mut proceed: Result<bool, ParseBoolError  + 'static> = Ok(true);
-        let mut state : Result<bool, ParseBoolError  + 'static>;
-        while proceed? {
-            state = input!("Enter a command ({} | {}): ", "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse::<bool>()?;
+        let mut proceed: bool + 'static = true;
+        let mut state: bool + 'static;
+        while proceed {
             loop {
-                match state? {
-                    bool => { break; }
-                    ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>()?; }
+                match input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
+                    Ok(a) => {
+                        state = a;
+                        break;
+                    }
+                    ParseIntError => { continue; }
                 }
             }
-            self.send_request(&state?);
-            proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()?;
+            self.send_request(&state);
             loop {
-                match proceed? {
-                    bool => { break; }
-                    ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>()?; }
+                match input!("Enter {} to continue inputing commands, otherwise enter {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
+                    Ok(b) => {
+                        proceed = b;
+                        break;
+                    }
+                    ParseBoolError => { continue; }
                 }
             }
         }
@@ -175,25 +183,30 @@ impl PositionClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        let mut proceed: Result<bool, ParseBoolError  + 'static> = Ok(true);
-        let mut position: Result<i32, ParseIntError  + 'static>;
-        while proceed? {
-            position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>()?;
+        let mut proceed: bool + 'static = true;
+        let mut position: i32 + 'static;
+        while proceed {
             loop {
-                match position? {
-                    bool {
-                        if position? < 0 {position = Ok(0);}
+                match input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>()? {
+                    a if a < 0 => {
+                        position = 0;
                         break;
                     }
-                    ParseIntError => { position = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<i32>()?; }
+                    b if b >= 0 {
+                        position = b;
+                        break;
+                    }
+                    ParseIntError => { continue; }
                 }
             }
-            self.send_request(&position?);
-            proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()?;
+            self.send_request(&position);
             loop {
-                match proceed? {
-                    bool => { break; }
-                    ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>()?; }
+                match input!("Enter {} to continue inputing commands, otherwise enter {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
+                    Ok(c) => {
+                        proceed = c;
+                        break;
+                    }
+                    ParseBoolError => { continue; }
                 }
             }
         }
