@@ -8,10 +8,6 @@ use std_srvs::srv::SetBool;
 use science_interfaces_rs::srv::Position;
 use sensor_msgs::msg::Image;
 
-pub trait ClientExecution {
-    fn new()
-}
-
 pub struct OnOffClient {
     _subsystem: String,
     _device: String,
@@ -174,7 +170,7 @@ impl PositionClient {
             loop {
                 match position {
                     Ok(i32) => {
-                        if &position? < 0 { position = Ok(0); }
+                        if &position? < &0 { position = Ok(0); }
                         break;
                     }
                     ParseIntError => { position = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<i32>(); }
