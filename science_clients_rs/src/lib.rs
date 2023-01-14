@@ -33,7 +33,7 @@ impl OnOffClient {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        let node_thread std::thread::spawn(move || {
+        let node_thread = std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
@@ -42,8 +42,8 @@ impl OnOffClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        let mut proceed: bool + 'static = true;
-        let mut state: bool + 'static;
+        static mut proceed: bool = true;
+        static mut state: bool;
         while proceed {
             loop {
                 match input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
@@ -51,7 +51,7 @@ impl OnOffClient {
                         state = a;
                         break;
                     }
-                    ParseIntError => { continue; }
+                    ParseBoolError => { continue; }
                 }
             }
             self.send_request(&state);
@@ -119,8 +119,8 @@ impl CameraClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        let mut proceed: bool + 'static = true;
-        let mut state: bool + 'static;
+        static mut proceed: bool = true;
+        static mut state: bool;
         while proceed {
             loop {
                 match input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
@@ -128,7 +128,7 @@ impl CameraClient {
                         state = a;
                         break;
                     }
-                    ParseIntError => { continue; }
+                    ParseBoolError => { continue; }
                 }
             }
             self.send_request(&state);
@@ -186,8 +186,8 @@ impl PositionClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        let mut proceed: bool + 'static = true;
-        let mut position: i32 + 'static;
+        static mut proceed: bool = true;
+        static mut position: i32;
         while proceed {
             loop {
                 match input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>()? {
@@ -195,7 +195,7 @@ impl PositionClient {
                         position = 0;
                         break;
                     }
-                    b if b >= 0 {
+                    b if b >= 0 => {
                         position = b;
                         break;
                     }
