@@ -161,9 +161,10 @@ impl PositionClient {
                 match input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>() {
                     Ok(input) => {
                         if input < 0 {
-                            input = 0;
+                            &self.send_request(0);
+                        } else {
+                            &self.send_request(input);
                         }
-                        &self.send_request(input); 
                         break;
                     },
                     ParseIntError => { unreachable!(); }
