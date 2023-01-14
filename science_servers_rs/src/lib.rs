@@ -13,7 +13,7 @@ pub struct GPIOServer {
     _subsystem: String,
     _device: String,
     _server: Arc<rclrs::Service<SetBool>>,
-    _pin: Arc<Mutex<OutputPin>>,
+    _pin: Arc<Mutex<Gpio>>,
 }
 
 impl GPIOServer {
@@ -26,10 +26,10 @@ impl GPIOServer {
                 let pin = *pin_clone.lock().unwrap();
                 if request.data {
                     pin.set_high();
-                    Ok(std_srvs::srv::SetBool_Response{success: true, message: format!("{} is on.", &device)})
+                    std_srvs::srv::SetBool_Response{success: true, message: format!("{} is on.", &device)}
                 }
                 pin.set_low();
-                Ok(std_srvs::srv::SetBool_Response{success: true, message: format!("{} is off.", &device)})
+                std_srvs::srv::SetBool_Response{success: true, message: format!("{} is off.", &device)}
             }
         )?;
         let _subsystem = subsystem;
@@ -47,14 +47,14 @@ pub struct CameraServer {
     _subsystem: String,
     _device: String,
     _server: Arc<rclrs::Service<SetBool>>,
-    _publisher: Arc<rclrs::Publisher<Image>>,
+    _publisher: rclrs::Publisher<Image>,
     _cam: videoio::VideoCapture,
     _capture_delay: u64,
     _active: Arc<Mutex<bool>>,
 }
 
 impl CameraServer {
-    fn new(subsystem: String, device: String, camera_num: i32, frame_width: f64, frame_height: f64, capture_delay: u64) -> Result<Self, Error> { // capture delay is in milliseconds
+    fn new(subsystem: String, device: String, camera_num: u8, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
         let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
@@ -64,14 +64,14 @@ impl CameraServer {
                     Ok(std_srvs::srv::SetBool_Response{success: true, message: format!("{} is already in requested state.", &device).yellow().to_string()})
                 }
                 *active_clone.lock().unwrap() = request.data;
-                Ok(std_srvs::srv::SetBool_Response{success: true, message: format!("{} is now in requested state.", &device).to_string()})
+                std_srvs::srv::SetBool_Response{success: true, message: format!("{} is now in requested state.", &device).to_string()}
             }
         )?;
         let _publisher = _node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
-        let _cam = videoio::VideoCapture::new(camera_num, videoio::CAP_ANY)?;
-        _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width);
-        _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height);
-        let _capture_delay = capture_delay; 
+        let _cam = videoio::VideoCapture::new(camera_num.into(), videoio::CAP_ANY)?;
+        _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
+        _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
+        let _capture_delay = capture_delay.into(); 
         let _subsystem = subsystem;
         let _device = device.replace("_", " ");
         Ok(Self{_node:_node, _subsystem:_subsystem, _device:_device, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
@@ -90,7 +90,8 @@ impl CameraServer {
                     std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
                 }
             }
-        })?;
+            Ok(())
+        });
         Ok(rclrs::spin(&self._node)?)
     }
 }
@@ -186,7 +187,7 @@ impl TicDriver {
         .spawn().expect(format!("{}", "Failed to set stepper motor max decceleration.".red()).as_str());
     }
     fn set_step_mode(mode: TicStepMode) {
-        Command::new("ticcmd").arg("--step-mode").arg(format!("{}", mode))
+        Command::new("ticcmd").arg("--step-mode").arg(format!("{}", mode as u8))
         .spawn().expect(format!("{}", "Failed to set stepper motor step mode.".red()).as_str());
     }
     fn set_current_limit(limit: &u16) {
@@ -243,29 +244,26 @@ impl StepperMotorServer {
             move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
                 let requested_displacement: i32 = request.position-TicDriver::get_current_position().unwrap();
                 println!("New position requested!");
-                if requested_displacement.unwrap() != 0 {
+                if requested_displacement != 0 {
                     let is_direction_downward: bool = requested_displacement > 0;
                     TicDriver::clear_driver_error();
                     TicDriver::energize();
                     TicDriver::exit_safe_start();
                     TicDriver::set_target_position_relative(&requested_displacement);
-                    match is_direction_downward {
-                        true => {
-                            while !TicDriver::reached_bottom().unwrap() {
-                                TicDriver::reset_command_timeout();
-                            }
-                        }
-                        false => {
-                            while !TicDriver::reached_top().unwrap() {
-                                TicDriver::reset_command_timeout();
-                            }
-                        }
+                    if let true = is_direction_downward {
+                        while !TicDriver::reached_bottom().unwrap() {
+                            TicDriver::reset_command_timeout();
+                        };
+                    } else {
+                        while !TicDriver::reached_top().unwrap() {
+                            TicDriver::reset_command_timeout();
+                        };
                     }
                     TicDriver::deenergize();
                     TicDriver::enter_safe_start();
-                    Ok(science_interfaces_rs::srv::Position_Response{success: true, position: TicDriver::get_current_position().unwrap(), error: String::new()})
+                    science_interfaces_rs::srv::Position_Response{success: true, position: TicDriver::get_current_position().unwrap(), error: String::new()}
                 }
-                Ok(science_interfaces_rs::srv::Position_Response{success: false, position: TicDriver::get_current_position().unwrap(), error: "Already at requested position.".yellow().to_string()})
+                science_interfaces_rs::srv::Position_Response{success: false, position: TicDriver::get_current_position().unwrap(), error: "Already at requested position.".yellow().to_string()}
             }
         )?;
         let _subsystem = subsystem;
