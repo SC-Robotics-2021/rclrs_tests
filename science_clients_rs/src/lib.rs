@@ -41,8 +41,8 @@ impl OnOffClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        let mut proceed: Result<bool, ParseBoolError> + 'static = Ok(true);
-        let mut state : Result<bool, ParseBoolError> + 'static ;
+        let mut proceed: Result<bool, ParseBoolError  + 'static> = Ok(true);
+        let mut state : Result<bool, ParseBoolError + 'static>;
         while proceed? {
             state = input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()?;
             loop {
@@ -113,8 +113,8 @@ impl CameraClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        let mut proceed: Result<bool, ParseBoolError> + 'static = Ok(true);
-        let mut state : Result<bool, ParseBoolError> + 'static;
+        let mut proceed: Result<bool, ParseBoolError  + 'static> = Ok(true);
+        let mut state : Result<bool, ParseBoolError  + 'static>;
         while proceed? {
             state = input!("Enter a command ({} | {}): ", "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse::<bool>()?;
             loop {
@@ -175,8 +175,8 @@ impl PositionClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        let mut proceed: Result<bool, ParseBoolError> + 'static= Ok(true);
-        let mut position: Result<i32, ParseIntError> + 'static;
+        let mut proceed: Result<bool, ParseBoolError  + 'static> = Ok(true);
+        let mut position: Result<i32, ParseIntError  + 'static>;
         while proceed? {
             position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>()?;
             loop {
