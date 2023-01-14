@@ -9,19 +9,19 @@ use anyhow::{Result, Error};
 use colored::*;
 
 pub struct GPIOServer {
-    _node: rclrs::Node,
     _subsystem: String,
     _device: String,
+    _node: Arc<Mutex<rclrs::Node>>,
     _server: Arc<rclrs::Service<SetBool>>,
     _pin: Arc<Mutex<OutputPin>>,
 }
 
 impl GPIOServer {
     fn new(&self, subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
+        let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
         let _pin = Arc::new(Mutex::new(Gpio::new()?.get(pin_num)?.into_output_low()));
         let pin_clone =  Arc::clone(&_pin);
-        let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+        let _server = _node.unwrap().create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                 let pin = *pin_clone.lock().unwrap();
                 let mut message: String;
@@ -41,14 +41,18 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        rclrs::spin(&self._node);
+        let node_clone = Arc::clone(&self._node);
+        std::thread::spawn(|| {
+            let node = node_clone.lock().unwrap()
+            rclrs::spin(&node);
+        });
     }
 }
 
 pub struct CameraServer {
-    _node: rclrs::Node,
     _subsystem: String,
     _device: String,
+    _node: Arc<Mutex<rclrs::Node>>,
     _server: Arc<rclrs::Service<SetBool>>,
     _publisher: rclrs::Publisher<Image>,
     _cam: videoio::VideoCapture,
@@ -58,10 +62,10 @@ pub struct CameraServer {
 
 impl CameraServer {
     fn new(subsystem: String, device: String, camera_num: u8, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
-        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
+        let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
-        let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+        let _server = _node.unwrap().create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                 let mut message: String;
                 let success: bool = true;
@@ -76,7 +80,7 @@ impl CameraServer {
                 std_srvs::srv::SetBool_Response{success: success, message: message}
             }
         )?;
-        let _publisher = _node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
+        let _publisher = _node.unwrap().create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
         let _cam = videoio::VideoCapture::new(camera_num.into(), videoio::CAP_ANY)?;
         _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
         _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
@@ -87,6 +91,11 @@ impl CameraServer {
     }
 
     fn run(&self) {
+        let node_clone = Arc::clone(&self._node);
+        std::thread::spawn(|| {
+            let node = node_clone.lock().unwrap()
+            rclrs::spin(&node);
+        });
         let active_clone = Arc::clone(&self._active);
         std::thread::spawn(|| {
                 let active = *active_clone.lock().unwrap();
@@ -99,9 +108,7 @@ impl CameraServer {
                         std::thread::sleep(std::time::Duration::from_millis(self._capture_delay));
                     }
                 }
-            }
-        );
-        rclrs::spin(&self._node);
+            });
     }
 }
 
@@ -224,9 +231,9 @@ impl TicDriver {
 }
 
 pub struct StepperMotorServer {
-    _node: rclrs::Node,
     _subsystem: String,
     _device: String,
+    _node: Arc<Mutex<rclrs::Node>>,
     _server: Arc<rclrs::Service<Position>>,
 }
 
@@ -248,8 +255,8 @@ impl StepperMotorServer {
         TicDriver::halt_and_set_position(&0);
         TicDriver::deenergize();
         TicDriver::enter_safe_start();
-        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?;
-        let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+        let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
+        let _server = _node.unwrap().create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
                 let mut success: bool = true;
                 let mut message: String = String::new();
@@ -285,6 +292,10 @@ impl StepperMotorServer {
     }
 
     fn run(&self) {
-        rclrs::spin(&self._node);
+        let node_clone = Arc::clone(&self._node);
+        std::thread::spawn(|| {
+            let node = node_clone.lock().unwrap()
+            rclrs::spin(&node);
+        });
     }
 }

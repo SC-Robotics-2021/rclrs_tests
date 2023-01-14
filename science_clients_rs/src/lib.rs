@@ -11,14 +11,14 @@ use sensor_msgs::msg::Image;
 pub struct OnOffClient {
     _subsystem: String,
     _device: String,
-    _node: rclrs::Node,
+    _node: Arc<Mutex<rclrs::Node>,
     _client: Arc<rclrs::Client<SetBool>>,
 }
 
 impl OnOffClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
-        let _client = _node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
+        let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
+        let _client = _node.unwrap().create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subsystem = subsystem;
         let _device = device.replace("_", " ").to_string();
         Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client})
@@ -34,15 +34,13 @@ impl OnOffClient {
     }
 
     fn cli_control(&self) -> Result<(), Error> {
-        std::thread::spawn(|| {
-            rclrs::spin(&self._node);
-        });
+        self.run();
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
         while proceed? {
             state = input!("Enter a command for the {} (on => {} | off => {}): ", &self._device, "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match state? {
+                match state.as_ref().unwrap() {
                     bool => { break; }
                     ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
@@ -50,13 +48,21 @@ impl OnOffClient {
             self.send_request(state.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed? {
+                match proceed.as_ref().unwrap() {
                     bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
         }
         Ok(())
+    }
+    
+    fn run(&self) {
+        let node_clone = Arc::clone(&self._node);
+        std::thread::spawn(|| {
+            let node = node_clone.lock().unwrap()
+            rclrs::spin(&node);
+        });
     }
 }
 
@@ -71,12 +77,12 @@ pub struct CameraClient {
 
 impl CameraClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
+        let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
         let _frame = Arc::new(Mutex::new(None));
         let frame_clone = Arc::clone(&_frame);
-        let _client = _node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
+        let _client = _node.unwrap().create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subscription = {
-            _node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
+            _node.unwrap().create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| {
                     println!("Recieving new {} image!", device.replace("_", " "));
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
@@ -102,29 +108,35 @@ impl CameraClient {
     }
 
     fn cli_control(&self) -> Result<(), Error> {
-        std::thread::spawn(|| {
-            rclrs::spin(&self._node);
-        });
+        self.run();
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
         while proceed? {
             state = input!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match state? {
+                match state.as_ref().unwrap() {
                     bool => { break; }
-                    ParseBoolError => { input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
+                    ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
             self.send_request(state.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed? {
+                match proceed.as_ref().unwrap() {
                     bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
         }
         Ok(())
+    }
+
+    fn run(&self) {
+        let node_clone = Arc::clone(&self._node);
+        std::thread::spawn(|| {
+            let node = node_clone.lock().unwrap()
+            rclrs::spin(&node);
+        });
     }
 }
 
@@ -137,8 +149,8 @@ pub struct PositionClient {
 
 impl PositionClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?;
-        let _client = _node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
+        let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
+        let _client = _node.unwrap().create_client::<Position>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subsystem = subsystem;
         let _device = device.replace("_", " ").to_string();
         Ok(Self{_subsystem:_subsystem, _device:_device, _node:_node, _client:_client})
@@ -160,15 +172,13 @@ impl PositionClient {
     }
 
     fn cli_control(&self) -> Result<(), Error> {
-        std::thread::spawn(|| {
-            rclrs::spin(&self._node);
-        });
+        self.run();
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut position: Result<i32, ParseIntError>;
         while proceed? {
             position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>();
             loop {
-                match position? {
+                match position.as_ref().unwrap() {
                     d if d < 0 => {
                         position = Ok(0); 
                         break;
@@ -182,12 +192,20 @@ impl PositionClient {
             self.send_request(position.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed? {
+                match proceed.as_ref().unwrap() {
                     bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
             }
         }
         Ok(())
+    }
+
+    fn run(&self) {
+        let node_clone = Arc::clone(&self._node);
+        std::thread::spawn(|| {
+            let node = node_clone.lock().unwrap()
+            rclrs::spin(&node);
+        });
     }
 }
