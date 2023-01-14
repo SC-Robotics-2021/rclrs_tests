@@ -7,8 +7,7 @@ use cv_bridge_rs::CvImage;
 use std_srvs::srv::SetBool;
 use science_interfaces_rs::srv::Position;
 use sensor_msgs::msg::Image;
-use dialoguer::{Select, Confirm};
-use console::Term;
+use dialoguer::{Select, Confirm, console::Term};
 
 
 pub struct OnOffClient {
@@ -47,8 +46,8 @@ impl OnOffClient {
         let mut proceed: bool = true;
         while proceed {
             match Select::new().item("Turn off").item("Turn on").interact_on_opt(&Term::stdout())? {
-                Some(input) => self.send_request(input as bool);
-                None => unreachable!();
+                Some(input) => { self.send_request(input as bool); },
+                None => { unreachable!(); }
             }
             proceed = Confirm::new().with_prompt("Do you want to continue command and control?").interact()?;
         }
@@ -108,8 +107,8 @@ impl CameraClient {
         let mut proceed: bool = true;
         while proceed {
             match Select::new().item("Turn off").item("Turn on").interact_on_opt(&Term::stdout())? {
-                Some(input) => self.send_request(input as bool);
-                None => unreachable!();
+                Some(input) => { self.send_request(input as bool); },
+                None => { unreachable!(); }
             }
             proceed = Confirm::new().with_prompt("Do you want to continue command and control?").interact()?;
         }
@@ -166,8 +165,8 @@ impl PositionClient {
                         }
                         &self.send_request(input); 
                         break;
-                    }
-                    ParseIntError => unreachable!();
+                    },
+                    ParseIntError => { unreachable!(); }
                 }
             }
             proceed = Confirm::new().with_prompt("Do you want to continue command and control?").interact()?;
