@@ -43,7 +43,7 @@ impl OnOffClient {
         self.run();
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
-        while &proceed? {
+        while proceed? {
             state = input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match &state? {
@@ -115,7 +115,7 @@ impl CameraClient {
         self.run();
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut state : Result<bool, ParseBoolError>;
-        while &proceed? {
+        while proceed? {
             state = input!("Enter a command ({} | {}): ", "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
                 match &state? {
@@ -177,7 +177,7 @@ impl PositionClient {
         self.run();
         let mut proceed: Result<bool, ParseBoolError> = Ok(true);
         let mut position: Result<i32, ParseIntError>;
-        while &proceed? {
+        while proceed? {
             position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>();
             loop {
                 match &position? {
