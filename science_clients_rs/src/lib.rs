@@ -7,6 +7,7 @@ use cv_bridge_rs::CvImage;
 use std_srvs::srv::SetBool;
 use science_interfaces_rs::srv::Position;
 use sensor_msgs::msg::Image;
+use dialoguer::{Select, Confirm};
 
 pub struct OnOffClient {
     _node: Arc<Mutex<rclrs::Node>>,
@@ -22,8 +23,8 @@ impl OnOffClient {
         Ok(Self{_node:_node, _client:_client})
     }
 
-    async fn send_request(&self, state: &bool) -> Result<(), Error> {
-        let request = std_srvs::srv::SetBool_Request{data: *state};
+    async fn send_request(&self, state: bool) -> Result<(), Error> {
+        let request = std_srvs::srv::SetBool_Request{data: state};
         let future = self._client.call_async(&request);
         println!("Request sent.");
         let response = future.await?;
@@ -41,28 +42,13 @@ impl OnOffClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        static mut proceed: bool = true;
-        static mut state: bool;
+        let mut proceed: bool = true;
         while proceed {
-            loop {
-                match input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    x if type(x) == bool => {
-                        state = x;
-                        break;
-                    }
-                    ParseBoolError => { continue; }
-                }
+            match Select::new().item("Turn off").item("Turn on").interact()? {
+                Some(input) => self.send_request(input as bool);
+                None => unreachable!();
             }
-            self.send_request(&state);
-            loop {
-                match input!("Enter {} to continue inputing commands, otherwise enter {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    x if type(x) == bool => {
-                        proceed = x;
-                        break;
-                    }
-                    ParseBoolError => { continue; }
-                }
-            }
+            proceed = Confirm::new().with_prompt("Do you want to continue command and control?").interact()?;
         }
         Ok(())
     }
@@ -98,8 +84,8 @@ impl CameraClient {
         Ok(Self{_node:_node, _client:_client, _subscription:_subscription, _frame:_frame})
     }
 
-    async fn send_request(&self, state: &bool) -> Result<(), Error> {
-        let request = std_srvs::srv::SetBool_Request{data: *state};
+    async fn send_request(&self, state: bool) -> Result<(), Error> {
+        let request = std_srvs::srv::SetBool_Request{data: state};
         let future = self._client.call_async(&request);
         println!("Request sent.");
         let response = future.await?;
@@ -117,28 +103,13 @@ impl CameraClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        static mut proceed: bool = true;
-        static mut state: bool;
+        let mut proceed: bool = true;
         while proceed {
-            loop {
-                match input!("Enter a command (on => {} | off => {}): ", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    x if type(x) == bool => {
-                        state = x;
-                        break;
-                    }
-                    ParseBoolError => { continue; }
-                }
+            match Select::new().item("Turn off").item("Turn on").interact()? {
+                Some(input) => self.send_request(input as bool);
+                None => unreachable!();
             }
-            self.send_request(&state);
-            loop {
-                match input!("Enter {} to continue inputing commands, otherwise enter {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    x if type(x) == bool => {
-                        proceed = x;
-                        break;
-                    }
-                    ParseBoolError => { continue; }
-                }
-            }
+            proceed = Confirm::new().with_prompt("Do you want to continue command and control?").interact()?;
         }
         Ok(())
     }
@@ -158,8 +129,8 @@ impl PositionClient {
         Ok(Self{_node:_node, _client:_client})
     }
 
-    async fn send_request(&self, position: &i32) -> Result<(), Error> {
-        let request = science_interfaces_rs::srv::Position_Request{position: *position};
+    async fn send_request(&self, position: i32) -> Result<(), Error> {
+        let request = science_interfaces_rs::srv::Position_Request{position: position};
         let future = self._client.call_async(&request);
         println!("Request sent.");
         let response = future.await?;
@@ -183,32 +154,21 @@ impl PositionClient {
 
     fn cli_control(&self) -> Result<(), Error> {
         self.run();
-        static mut proceed: bool = true;
-        static mut position: i32;
+        let mut proceed: bool = true;
         while proceed {
             loop {
-                match input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>()? {
-                    x if x < 0 => {
-                        position = 0;
+                match input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>() {
+                    Ok(input) => {
+                        if input < 0 {
+                            input = 0;
+                        }
+                        &self.send_request(input); 
                         break;
                     }
-                    y if y >= 0 => {
-                        position = y;
-                        break;
-                    }
-                    ParseIntError => { continue; }
+                    ParseIntError => unreachable!();
                 }
             }
-            self.send_request(&position);
-            loop {
-                match input!("Enter {} to continue inputing commands, otherwise enter {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>()? {
-                    x if type(x) == bool => {
-                        proceed = x;
-                        break;
-                    }
-                    ParseBoolError => { continue; }
-                }
-            }
+            proceed = Confirm::new().with_prompt("Do you want to continue command and control?").interact()?;
         }
         Ok(())
     }
