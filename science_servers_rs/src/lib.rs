@@ -41,7 +41,7 @@ impl GPIOServer {
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
         std::thread::spawn(move || {
-            let node = node_clone.lock().unwrap()
+            let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
     }
@@ -89,7 +89,7 @@ impl CameraServer {
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
         std::thread::spawn(move || {
-            let node = node_clone.lock().unwrap()
+            let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
         let active_clone = Arc::clone(&self._active);
@@ -103,7 +103,7 @@ impl CameraServer {
                     self._cam.read(&mut frame);
                     println!("Publishing frame!");
                     self._publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                    std::thread::sleep(std::time::Duration::from_millis(&delay));
+                    std::thread::sleep(std::time::Duration::from_millis(delay));
                 }
             }
         });
@@ -290,7 +290,7 @@ impl StepperMotorServer {
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
         std::thread::spawn(move || {
-            let node = node_clone.lock().unwrap()
+            let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
     }
