@@ -13,7 +13,7 @@ pub struct GPIOServer {
     _device: String,
     _node: Arc<Mutex<rclrs::Node>>,
     _server: Arc<rclrs::Service<SetBool>>,
-    _pin: Arc<Mutex<OutputPin>>,
+    _pin: Arc<Mutex<OutputPin>>
 }
 
 impl GPIOServer {
@@ -57,15 +57,17 @@ pub struct CameraServer {
     _publisher: rclrs::Publisher<Image>,
     _cam: videoio::VideoCapture,
     _capture_delay: u64,
-    _active: Arc<Mutex<bool>>,
+    _active: Arc<Mutex<bool>>
 }
 
 impl CameraServer {
     fn new(subsystem: String, device: String, camera_num: u8, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
         let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
+        let node_clone = Arc::clone(&_node);
+        let node = node_clone.lock().unwrap();
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
-        let _server = _node.unwrap().create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+        let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                 let mut message: String;
                 let success: bool = true;
@@ -80,7 +82,7 @@ impl CameraServer {
                 std_srvs::srv::SetBool_Response{success: success, message: message}
             }
         )?;
-        let _publisher = _node.unwrap().create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
+        let _publisher = node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
         let _cam = videoio::VideoCapture::new(camera_num.into(), videoio::CAP_ANY)?;
         _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
         _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
@@ -234,7 +236,7 @@ pub struct StepperMotorServer {
     _subsystem: String,
     _device: String,
     _node: Arc<Mutex<rclrs::Node>>,
-    _server: Arc<rclrs::Service<Position>>,
+    _server: Arc<rclrs::Service<Position>>
 }
 
 impl StepperMotorServer {
@@ -256,7 +258,9 @@ impl StepperMotorServer {
         TicDriver::deenergize();
         TicDriver::enter_safe_start();
         let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
-        let _server = _node.unwrap().create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+        let node_clone = Arc::clone(&_node);
+        let node = node_clone.lock().unwrap();
+        let _server = node.unwrap().create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
                 let mut success: bool = true;
                 let mut message: String = String::new();
