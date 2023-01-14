@@ -4,7 +4,7 @@ use opencv::{prelude::*, highgui, videoio};
 use cv_bridge_rs::CvImage;
 use sensor_msgs::msg::Image;
 use std_srvs::srv::SetBool;
-use rppal::gpio::Gpio;
+use rppal::gpio::{Gpio, OutputPin};
 use anyhow::{Result, Error};
 use colored::*;
 
@@ -13,7 +13,7 @@ pub struct GPIOServer {
     _subsystem: String,
     _device: String,
     _server: Arc<rclrs::Service<SetBool>>,
-    _pin: Arc<Mutex<Gpio>>,
+    _pin: Arc<Mutex<OutputPin>>,
 }
 
 impl GPIOServer {
@@ -60,11 +60,14 @@ impl CameraServer {
         let active_clone =  Arc::clone(&_active);
         let _server = _node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
+                let mut message: String = String::new();
                 if request.data == *active_clone.lock().unwrap() {
-                    Ok(std_srvs::srv::SetBool_Response{success: true, message: format!("{} is already in requested state.", &device).yellow().to_string()})
+                    message = format!("{} is already in requested state.", &device).yellow().to_string();
+                } else {
+                    message = format!("{} is now in requested state.", &device).to_string();
                 }
                 *active_clone.lock().unwrap() = request.data;
-                std_srvs::srv::SetBool_Response{success: true, message: format!("{} is now in requested state.", &device).to_string()}
+                std_srvs::srv::SetBool_Response{success: true, message: message }
             }
         )?;
         let _publisher = _node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?;
