@@ -17,9 +17,9 @@ pub struct OnOffClient {
 
 impl OnOffClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
+        let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
-        let node = node_clone.lock().unwrap();
+        let mut node = node_clone.lock().unwrap();
         let _client = node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subsystem = subsystem;
         let _device = device.replace("_", " ").to_string();
@@ -37,7 +37,7 @@ impl OnOffClient {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        std::thread::spawn(|| {
+        std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
@@ -50,7 +50,7 @@ impl OnOffClient {
         while proceed? {
             state = input!("Enter a command for the {} (on => {} | off => {}): ", &self._device, "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match state.as_ref().unwrap() {
+                match state.as_ref()? {
                     bool => { break; }
                     ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
@@ -58,7 +58,7 @@ impl OnOffClient {
             self.send_request(state.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().blue(), "false".bold().red()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed.as_ref().unwrap() {
+                match proceed.as_ref()? {
                     bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
@@ -79,9 +79,9 @@ pub struct CameraClient {
 
 impl CameraClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
+        let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
-        let node = node_clone.lock().unwrap();
+        let mut node = node_clone.lock().unwrap();
         let _client = node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _frame = Arc::new(Mutex::new(None));
         let frame_clone = Arc::clone(&_frame);
@@ -113,7 +113,7 @@ impl CameraClient {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        std::thread::spawn(|| {
+        std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
@@ -126,7 +126,7 @@ impl CameraClient {
         while proceed? {
             state = input!("Enter a command for the {} ({} | {}): ", &self._device, "on => true".bold().yellow(), "off => false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match state.as_ref().unwrap() {
+                match state.as_ref()? {
                     bool => { break; }
                     ParseBoolError => { state = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
@@ -134,7 +134,7 @@ impl CameraClient {
             self.send_request(state.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed.as_ref().unwrap() {
+                match proceed.as_ref()? {
                     bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
@@ -153,9 +153,9 @@ pub struct PositionClient {
 
 impl PositionClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let mut _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
+        let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
-        let node = node_clone.lock().unwrap();
+        let mut node = node_clone.lock().unwrap();
         let _client = node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _subsystem = subsystem;
         let _device = device.replace("_", " ").to_string();
@@ -179,7 +179,7 @@ impl PositionClient {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        std::thread::spawn(|| {
+        std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
@@ -192,7 +192,7 @@ impl PositionClient {
         while proceed? {
             position = input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>();
             loop {
-                match position.as_ref().unwrap() {
+                match position.as_ref()? {
                     d if d < &0 => {
                         position = Ok(0); 
                         break;
@@ -206,7 +206,7 @@ impl PositionClient {
             self.send_request(position.as_ref().unwrap());
             proceed = input!("If you would like to continue inputing commands, type {}, otherwise type {}.", "true".bold().yellow(), "false".bold().yellow()).trim().to_lowercase().parse::<bool>();
             loop {
-                match proceed.as_ref().unwrap() {
+                match proceed.as_ref()? {
                     bool => { break; }
                     ParseBoolError => { proceed = input!("{}", "Invalid input. Try again: ".yellow()).trim().to_lowercase().parse::<bool>(); }
                 }
