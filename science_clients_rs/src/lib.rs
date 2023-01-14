@@ -33,10 +33,11 @@ impl OnOffClient {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        std::thread::spawn(move || {
+        let node_thread std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
+        node_thread.join().expect("Unable to join node thread");
     }
 
     fn cli_control(&self) -> Result<(), Error> {
@@ -109,10 +110,11 @@ impl CameraClient {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        std::thread::spawn(move || {
+        let node_thread = std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
+        node_thread.join().expect("Unable to join node thread");
     }
 
     fn cli_control(&self) -> Result<(), Error> {
@@ -175,10 +177,11 @@ impl PositionClient {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        std::thread::spawn(move || {
+        let node_thread = std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
+        node_thread.join().expect("Unable to join node thread");
     }
 
     fn cli_control(&self) -> Result<(), Error> {

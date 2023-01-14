@@ -94,7 +94,7 @@ impl CameraServer {
         });
         let active_clone = Arc::clone(&self._active);
         let delay_clone = Arc::clone(&self._capture_delay);
-        let publiser_thread = std::thread::spawn(move || {
+        let publisher_thread = std::thread::spawn(move || {
             let active = *active_clone.lock().unwrap();
             let delay = *delay_clone.lock().unwrap();
             loop {
@@ -257,7 +257,7 @@ impl StepperMotorServer {
         let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _server = node.unwrap().create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+        let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
                 let mut success: bool = true;
                 let mut message: String = String::new();
@@ -292,7 +292,7 @@ impl StepperMotorServer {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        lstd::thread::spawn(move || {
+        let node_thread = std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
