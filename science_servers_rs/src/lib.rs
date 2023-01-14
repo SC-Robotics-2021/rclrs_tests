@@ -88,13 +88,13 @@ impl CameraServer {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        std::thread::spawn(move || {
+        let node_thread = std::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
         let active_clone = Arc::clone(&self._active);
         let delay_clone = Arc::clone(&self._capture_delay);
-        std::thread::spawn(move || {
+        let publiser_thread = std::thread::spawn(move || {
             let active = *active_clone.lock().unwrap();
             let delay = *delay_clone.lock().unwrap();
             loop {
@@ -107,6 +107,9 @@ impl CameraServer {
                 }
             }
         });
+
+        node_thread.join().expect("Unable to join node thread");
+        publisher_thread.join().expect("Unable to join publisher thread");
     }
 }
 
@@ -289,9 +292,10 @@ impl StepperMotorServer {
 
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
-        std::thread::spawn(move || {
+        lstd::thread::spawn(move || {
             let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
+        node_thread.join().expect("Unable to join node thread");
     }
 }
