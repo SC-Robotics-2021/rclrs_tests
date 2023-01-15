@@ -34,7 +34,7 @@ impl OnOffClient {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(self._node.as_ref());
+        let node_clone = Arc::clone(self._node);
         let _node_thread = std::thread::spawn(move || {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node);
@@ -76,7 +76,7 @@ impl CameraClient {
                     println!("Recieving new image!");
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
                     if frame_clone.lock().unwrap().as_ref().unwrap().size().unwrap().width > 0 {
-                        highgui::imshow(&device.replace("_", " "), &frame_clone.lock().unwrap().as_ref().unwrap());
+                        highgui::imshow(&device.replace("_", " "), &frame_clone.lock().unwrap().unwrap());
                     }
                     let _key = highgui::wait_key(10);
                 },
@@ -95,7 +95,7 @@ impl CameraClient {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(self._node.as_ref());
+        let node_clone = Arc::clone(self._node);
         let _node_thread = std::thread::spawn(move || {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node);
@@ -146,7 +146,7 @@ impl PositionClient {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(self._node.as_ref());
+        let node_clone = Arc::clone(self._node);
         let _node_thread = std::thread::spawn(move || {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node);
