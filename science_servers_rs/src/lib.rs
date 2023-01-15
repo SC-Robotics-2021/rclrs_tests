@@ -40,7 +40,7 @@ impl GPIOServer {
 
     fn run(&self) {
         let node_clone = *self._node.clone();
-        let _node_thread = std::thread::spawn(move || -> Result<Self, rclrs::RclrsError> {
+        let _node_thread = std::thread::spawn(move || -> Result<(), rclrs::RclrsError> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
         });
@@ -57,10 +57,10 @@ pub struct CameraServer {
 }
 
 impl CameraServer {
-    fn new(subsystem: String, device: String, camera_num: u8, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
+    fn new(subsystem: String, device: String, camera_id: u8, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
         let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
-        let mut node = node_clone.lock()?;
+        let mut node = node_clone.lock().unwrap();
         let _publisher = Arc::new(Mutex::new(node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?));
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
@@ -69,7 +69,7 @@ impl CameraServer {
                 let mut message: String;
                 let success: bool = true;
                 if request.data != *active_clone.lock().unwrap() {
-                    *active_clone.lock()? = request.data;
+                    *active_clone.lock().unwrap() = request.data;
                     message = format!("{} is now in requested state.", &device).to_string();
 
                 } else {
@@ -79,9 +79,9 @@ impl CameraServer {
                 std_srvs::srv::SetBool_Response{success: success, message: message}
             }
         )?;
-        let _cam = videoio::VideoCapture::new(camera_num.into(), videoio::CAP_ANY)?;
-        _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
-        _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
+        let _cam = Arc::new(Mutex::new(videoio::VideoCapture::new(camera_id, videoio::CAP_ANY)?));
+        // _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
+        // _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
         let _capture_delay = Arc::new(Mutex::new(capture_delay.into())); 
         Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
     }
@@ -107,7 +107,7 @@ impl CameraServer {
                     cam.read(&mut frame);
                     println!("Publishing frame!");
                     publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                    std::thread::sleep(std::time::Duration::from_millis(33));
+                    std::thread::sleep(std::time::Duration::from_millis(&delay));
                 }
             }
         });
@@ -293,7 +293,7 @@ impl StepperMotorServer {
 
     fn run(&self) {
         let node_clone = *self._node.clone();
-        let _node_thread = std::thread::spawn(move || -> Result<Self, rclrs::RclrsError> {
+        let _node_thread = std::thread::spawn(move || -> Result<(), rclrs::RclrsError> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
         });
