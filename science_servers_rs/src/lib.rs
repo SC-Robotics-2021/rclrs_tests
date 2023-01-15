@@ -39,9 +39,9 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&self._node);
+        let node_clone = Arc::clone(self._node);
         let _node_thread = std::thread::spawn(move || {
-            let node = &*node_clone.lock().unwrap();
+            let node = *node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
     }
@@ -51,7 +51,7 @@ pub struct CameraServer {
     _node: Arc<Mutex<rclrs::Node>>,
     _server: Arc<rclrs::Service<SetBool>>,
     _publisher: Arc<Mutex<rclrs::Publisher<Image>>,
-    _cam: videoio::VideoCapture,
+    _cam: Arc<Mutex<videoio::VideoCapture>>,
     _capture_delay: Arc<Mutex<u64>>,
     _active: Arc<Mutex<bool>>
 }
@@ -87,22 +87,24 @@ impl CameraServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&self._node);
+        let node_clone = Arc::clone(self._node);
         let _node_thread = std::thread::spawn(move || {
-            let node = &*node_clone.lock().unwrap();
+            let node = *node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        let active_clone = Arc::clone(&self._active);
-        let delay_clone = Arc::clone(&self._capture_delay);
-        let publisher_clone = Arc::clone(&self._publisher);
+        let active_clone = Arc::clone(self._active);
+        let delay_clone = Arc::clone(self._capture_delay);
+        let publisher_clone = Arc::clone(self._publisher);
+        let cam_clone = Arc::clone(self._cam);
         let _publisher_thread = std::thread::spawn(move || {
-            let publisher = &*publisher_clone.lock().unwrap();
-            let active = &*active_clone.lock().unwrap();
-            let delay = &*delay_clone.lock().unwrap();
+            let publisher = *publisher_clone.lock().unwrap();
+            let active = *active_clone.lock().unwrap();
+            let delay = *delay_clone.lock().unwrap();
+            let cam = *cam_clone.lock().unwrap();
             loop {
                 if active {
                     let mut frame = Mat::default();
-                    self._cam.read(&mut frame);
+                    cam.read(&mut frame);
                     println!("Publishing frame!");
                     publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
                     std::thread::sleep(std::time::Duration::from_millis(delay));
@@ -290,9 +292,9 @@ impl StepperMotorServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&self._node);
+        let node_clone = Arc::clone(self._node);
         let _node_thread = std::thread::spawn(move || {
-            let node = &*node_clone.lock().unwrap();
+            let node = *node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
     }
