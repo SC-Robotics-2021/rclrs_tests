@@ -39,9 +39,9 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(self._node);
+        let node_clone = Arc::clone(&self._node);
         let _node_thread = std::thread::spawn(move || {
-            let node = *node_clone.lock().unwrap();
+            let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
     }
@@ -87,20 +87,20 @@ impl CameraServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(self._node);
+        let node_clone = Arc::clone(&self._node);
         let _node_thread = std::thread::spawn(move || {
-            let node = *node_clone.lock().unwrap();
+            let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        let active_clone = Arc::clone(self._active);
-        let delay_clone = Arc::clone(self._capture_delay);
-        let publisher_clone = Arc::clone(self._publisher);
-        let cam_clone = Arc::clone(self._cam);
+        let active_clone = Arc::clone(&self._active);
+        let delay_clone = Arc::clone(&self._capture_delay);
+        let publisher_clone = Arc::clone(&self._publisher);
+        let cam_clone = Arc::clone(&self._cam);
         let _publisher_thread = std::thread::spawn(move || {
-            let publisher = *publisher_clone.lock().unwrap();
-            let active = *active_clone.lock().unwrap();
-            let delay = *delay_clone.lock().unwrap();
-            let cam = *cam_clone.lock().unwrap();
+            let publisher = publisher_clone.lock().unwrap();
+            let active = active_clone.lock().unwrap();
+            let delay = delay_clone.lock().unwrap();
+            let cam = cam_clone.lock().unwrap();
             loop {
                 if active {
                     let mut frame = Mat::default();
@@ -292,9 +292,9 @@ impl StepperMotorServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(self._node);
+        let node_clone = Arc::clone(&self._node);
         let _node_thread = std::thread::spawn(move || {
-            let node = *node_clone.lock().unwrap();
+            let node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
     }
