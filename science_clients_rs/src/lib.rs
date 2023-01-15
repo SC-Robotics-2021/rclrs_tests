@@ -76,7 +76,7 @@ impl CameraClient {
                     println!("Recieving new image!");
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
                     if frame_clone.lock().unwrap().as_ref().unwrap().size().unwrap().width > 0 {
-                        highgui::imshow(&device.replace("_", " "), &frame_clone.lock().unwrap().unwrap());
+                        highgui::imshow(&device.replace("_", " "), &frame_clone.lock().unwrap().as_ref().unwrap());
                     }
                     let _key = highgui::wait_key(10);
                 },
