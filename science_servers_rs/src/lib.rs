@@ -10,8 +10,8 @@ use colored::*;
 
 pub struct GPIOServer {
     _node: Arc<Mutex<rclrs::Node>>,
+    _pin: Arc<Mutex<OutputPin>>,
     _server: Arc<rclrs::Service<SetBool>>,
-    _pin: Arc<Mutex<OutputPin>>
 }
 
 impl GPIOServer {
@@ -39,7 +39,7 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&(self._node));
+        let node_clone = Arc::clone(&(*self._node));
         let _node_thread = std::thread::spawn(move || {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node);
@@ -49,11 +49,12 @@ impl GPIOServer {
 
 pub struct CameraServer {
     _node: Arc<Mutex<rclrs::Node>>,
-    _server: Arc<rclrs::Service<SetBool>>,
     _publisher: Arc<Mutex<rclrs::Publisher<Image>>,
     _cam: Arc<Mutex<videoio::VideoCapture>>,
     _capture_delay: Arc<Mutex<u64>>,
     _active: Arc<Mutex<bool>>
+    _server: Arc<rclrs::Service<SetBool>>,
+
 }
 
 impl CameraServer {
@@ -87,15 +88,15 @@ impl CameraServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&(self._node));
+        let node_clone = Arc::clone(&(*self._node));
         let _node_thread = std::thread::spawn(move || {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        let active_clone = Arc::clone(&(self._active));
-        let delay_clone = Arc::clone(&(self._capture_delay));
-        let publisher_clone = Arc::clone(&(self._publisher));
-        let cam_clone = Arc::clone(&(self._cam));
+        let active_clone = Arc::clone(&(*self._active));
+        let delay_clone = Arc::clone(&(*self._capture_delay));
+        let publisher_clone = Arc::clone(&(*self._publisher));
+        let cam_clone = Arc::clone(&(*self._cam));
         let _publisher_thread = std::thread::spawn(move || {
             let mut publisher = publisher_clone.lock().unwrap();
             let mut active = active_clone.lock().unwrap();
@@ -292,7 +293,7 @@ impl StepperMotorServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&(self._node));
+        let node_clone = Arc::clone(&(*self._node));
         let _node_thread = std::thread::spawn(move || {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node);
