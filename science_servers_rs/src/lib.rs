@@ -39,7 +39,7 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        let node_clone = *self._node.clone();
+        let node_clone = **self._node.clone();
         let _node_thread = std::thread::spawn(move || -> Result<(), rclrs::RclrsError> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
@@ -79,7 +79,7 @@ impl CameraServer {
                 std_srvs::srv::SetBool_Response{success: success, message: message}
             }
         )?;
-        let _cam = Arc::new(Mutex::new(videoio::VideoCapture::new(camera_id, videoio::CAP_ANY)?));
+        let _cam = Arc::new(Mutex::new(videoio::VideoCapture::new(camera_id.into(), videoio::CAP_ANY)?));
         // _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
         // _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
         let _capture_delay = Arc::new(Mutex::new(capture_delay.into())); 
@@ -87,19 +87,19 @@ impl CameraServer {
     }
 
     fn run(&self) {
-        let node_clone = *self._node.clone();
-        let _node_thread = std::thread::spawn(move || -> Result<Self, rclrs::RclrsError> {
+        let node_clone = **self._node.clone();
+        let _node_thread = std::thread::spawn(move || -> Result<(), rclrs::RclrsError> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        let active_clone = *self._active.clone();
-        let delay_clone = *self._capture_delay.clone();
-        let publisher_clone = *self._publisher.clone();
-        let cam_clone = *self._cam.clone();
+        let active_clone = **self._active.clone();
+        let delay_clone = **self._capture_delay.clone();
+        let publisher_clone = **self._publisher.clone();
+        let cam_clone = **self._cam.clone();
         let _publisher_thread = std::thread::spawn(move || -> Result<(), Error> {
             let mut publisher = publisher_clone.lock().unwrap();
             let mut active = active_clone.lock().unwrap();
-            let mut delay = delay_clone.lock().unwrap();
+            let delay = delay_clone.lock().unwrap();
             let mut cam = cam_clone.lock().unwrap();
             loop {
                 if active {
@@ -107,7 +107,7 @@ impl CameraServer {
                     cam.read(&mut frame);
                     println!("Publishing frame!");
                     publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                    std::thread::sleep(std::time::Duration::from_millis(&delay));
+                    std::thread::sleep(std::time::Duration::from_millis(delay));
                 }
             }
         });
@@ -292,7 +292,7 @@ impl StepperMotorServer {
     }
 
     fn run(&self) {
-        let node_clone = *self._node.clone();
+        let node_clone = **self._node.clone();
         let _node_thread = std::thread::spawn(move || -> Result<(), rclrs::RclrsError> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)

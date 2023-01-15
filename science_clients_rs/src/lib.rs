@@ -34,7 +34,7 @@ impl OnOffClient {
     }
 
     fn run(&self) {
-        let node_clone = *self._node.clone();
+        let node_clone = **self._node.clone();
         let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
@@ -95,7 +95,7 @@ impl CameraClient {
     }
 
     fn run(&self) {
-        let node_clone = *self._node.clone();
+        let node_clone = **self._node.clone();
         let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
@@ -146,7 +146,7 @@ impl PositionClient {
     }
 
     fn run(&self) {
-        let node_clone = *self._node.clone();
+        let node_clone = **self._node.clone();
         let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
