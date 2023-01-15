@@ -23,7 +23,7 @@ impl GPIOServer {
         let pin_clone =  Arc::clone(&_pin);
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
-                let mut pin = pin_clone.lock()?;
+                let mut pin = pin_clone.lock().unwrap();
                 let mut message: String;
                 if request.data {
                     pin.set_high();
@@ -39,9 +39,9 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&self._node);
+        let node_clone = Arc::clone(&*self._node);
         let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
-            let node = node_clone.lock()?;
+            let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
         });
     }
@@ -54,7 +54,6 @@ pub struct CameraServer {
     _capture_delay: Arc<Mutex<u64>>,
     _active: Arc<Mutex<bool>>,
     _server: Arc<rclrs::Service<SetBool>>
-
 }
 
 impl CameraServer {
@@ -69,7 +68,7 @@ impl CameraServer {
             move |_request_header: &rclrs::rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                 let mut message: String;
                 let success: bool = true;
-                if request.data != *active_clone.lock()? {
+                if request.data != *active_clone.lock().unwrap() {
                     *active_clone.lock()? = request.data;
                     message = format!("{} is now in requested state.", &device).to_string();
 
@@ -88,20 +87,20 @@ impl CameraServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&self._node);
+        let node_clone = Arc::clone(&*self._node);
         let _node_thread = std::thread::spawn(move || -> Result<(), rclrs::Error> {
-            let node = node_clone.lock()?;
+            let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        let active_clone = Arc::clone(&self._active);
-        let delay_clone = Arc::clone(&self._capture_delay);
-        let publisher_clone = Arc::clone(&self._publisher);
-        let cam_clone = Arc::clone(&self._cam);
+        let active_clone = Arc::clone(&*self._active);
+        let delay_clone = Arc::clone(&*self._capture_delay);
+        let publisher_clone = Arc::clone(&*self._publisher);
+        let cam_clone = Arc::clone(&*self._cam);
         let _publisher_thread = std::thread::spawn(move || -> Result<(), Error> {
-            let mut publisher = publisher_clone.lock()?;
-            let mut active = active_clone.lock()?;
-            let mut delay = delay_clone.lock()?;
-            let mut cam = cam_clone.lock()?;
+            let mut publisher = publisher_clone.lock().unwrap();
+            let mut active = active_clone.lock().unwrap();
+            let mut delay = delay_clone.lock().unwrap();
+            let mut cam = cam_clone.lock().unwrap();
             loop {
                 if active {
                     let mut frame = Mat::default();
@@ -264,7 +263,7 @@ impl StepperMotorServer {
                 let mut success: bool = true;
                 let mut message: String = String::new();
                 println!("New position requested!");
-                let requested_displacement: i32 = request.position-TicDriver::get_current_position()?;
+                let requested_displacement: i32 = request.position-TicDriver::get_current_position().unwrap();
                 if requested_displacement != 0 {
                     let is_direction_downward: bool = requested_displacement > 0;
                     TicDriver::clear_driver_error();
@@ -272,11 +271,11 @@ impl StepperMotorServer {
                     TicDriver::exit_safe_start();
                     TicDriver::set_target_position_relative(&requested_displacement);
                     if let true = is_direction_downward {
-                        while !TicDriver::reached_bottom()? {
+                        while !TicDriver::reached_bottom().unwrap() {
                             TicDriver::reset_command_timeout();
                         };
                     } else {
-                        while !TicDriver::reached_top()? {
+                        while !TicDriver::reached_top().unwrap() {
                             TicDriver::reset_command_timeout();
                         };
                     }
@@ -286,7 +285,7 @@ impl StepperMotorServer {
                     success = false;
                     message = "Already at requested position.".yellow().to_string();
                 }
-                science_interfaces_rs::srv::Position_Response{success: success, position: TicDriver::get_current_position()?, message: message}
+                science_interfaces_rs::srv::Position_Response{success: success, position: TicDriver::get_current_position().unwrap(), message: message}
             }
         )?;
         Ok(Self{_node:_node, _server:_server})
@@ -295,7 +294,7 @@ impl StepperMotorServer {
     fn run(&self) {
         let node_clone = Arc::clone(&self._node);
         let _node_thread = std::thread::spawn(move || -> Result<Self, Error> {
-            let mut node = node_clone.lock()?;
+            let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
         });
     }
