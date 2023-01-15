@@ -34,7 +34,7 @@ impl OnOffClient {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        let node_clone = *self._node.clone();
         let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
@@ -95,7 +95,7 @@ impl CameraClient {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        let node_clone = *self._node.clone();
         let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
@@ -125,7 +125,7 @@ impl PositionClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
-        let mut node = node_clone.lock()?;
+        let mut node = node_clone.lock().unwrap();
         let _client = node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         Ok(Self{_node:_node, _client:_client})
     }
@@ -146,7 +146,7 @@ impl PositionClient {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        let node_clone = *self._node.clone();
         let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)

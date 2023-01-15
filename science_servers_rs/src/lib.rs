@@ -18,7 +18,7 @@ impl GPIOServer {
     fn new(subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
-        let mut node = node_clone.lock()?;
+        let mut node = node_clone.lock().unwrap();
         let _pin = Arc::new(Mutex::new(Gpio::new()?.get(pin_num)?.into_output_low()));
         let pin_clone =  Arc::clone(&_pin);
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
@@ -39,8 +39,8 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
-        let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
+        let node_clone = *self._node.clone();
+        let _node_thread = std::thread::spawn(move || -> Result<Self, rclrs::RclrsError> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
         });
@@ -87,15 +87,15 @@ impl CameraServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
-        let _node_thread = std::thread::spawn(move || -> Result<(), rclrs::Error> {
+        let node_clone = *self._node.clone();
+        let _node_thread = std::thread::spawn(move || -> Result<Self, rclrs::RclrsError> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node);
         });
-        let active_clone = Arc::clone(&*self._active);
-        let delay_clone = Arc::clone(&*self._capture_delay);
-        let publisher_clone = Arc::clone(&*self._publisher);
-        let cam_clone = Arc::clone(&*self._cam);
+        let active_clone = *self._active.clone();
+        let delay_clone = *self._capture_delay.clone();
+        let publisher_clone = *self._publisher.clone();
+        let cam_clone = *self._cam.clone();
         let _publisher_thread = std::thread::spawn(move || -> Result<(), Error> {
             let mut publisher = publisher_clone.lock().unwrap();
             let mut active = active_clone.lock().unwrap();
@@ -257,7 +257,7 @@ impl StepperMotorServer {
         TicDriver::enter_safe_start();
         let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
-        let mut node = node_clone.lock()?;
+        let mut node = node_clone.lock().unwrap();
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rclrs::rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
                 let mut success: bool = true;
@@ -292,8 +292,8 @@ impl StepperMotorServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
-        let _node_thread = std::thread::spawn(move || -> Result<Self, Error> {
+        let node_clone = *self._node.clone();
+        let _node_thread = std::thread::spawn(move || -> Result<Self, rclrs::RclrsError> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
         });
