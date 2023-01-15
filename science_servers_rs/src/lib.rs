@@ -292,7 +292,7 @@ impl StepperMotorServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&self._node);
+        let node_clone = Arc::clone(&*self._node);
         let _node_thread = std::thread::spawn(move || -> Result<Self, Error> {
             let mut node = node_clone.lock().unwrap();
             rclrs::spin(&node)
