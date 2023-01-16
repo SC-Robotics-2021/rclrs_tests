@@ -1,5 +1,5 @@
 use std::{sync::{Arc, Mutex}, env::args, thread::{spawn, sleep}, time::Duration::from_millis, process::Command, str::ParseBoolError, num::ParseIntError};
-use rclrs::{Node, Service, Publisher, Context, spin, RclrsError, rmw_request_id_t, QOS_PROFILE_DEFAULT};
+use rclrs::{Node, Service, Publisher, Context, spin, RclrsError, rmw_request_id_t};
 use science_interfaces_rs::srv::Position;
 use opencv::{prelude::*, highgui, videoio};
 use cv_bridge_rs::CvImage::from_cvmat;
@@ -45,9 +45,9 @@ impl ServerNode for GPIOServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        // let node_clone = Arc::clone(&*self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
-            let mut node = node_clone.lock().unwrap();
+            let node = *self._node.lock().unwrap();
             spin(&node)
         });
     }
@@ -55,9 +55,9 @@ impl ServerNode for GPIOServer {
 
 pub struct CameraServer {
     _node: Arc<Mutex<Node>>,
-    _publisher: Arc<Mutex<Publisher<Image>>,
-    _cam: Arc<Mutex<videoio::VideoCapture>>,
-    _capture_delay: Arc<Mutex<u64>>,
+    _publisher: Arc<Publisher<Image>>,
+    _cam: Arc<videoio::VideoCapture>>,
+    _capture_delay: Arc<u64>,
     _active: Arc<Mutex<bool>>,
     _server: Arc<Service<SetBool>>
 }
@@ -67,7 +67,7 @@ impl ServerNode for CameraServer {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _publisher = Arc::new(Mutex::new(node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), QOS_PROFILE_DEFAULT)?));
+        let _publisher = Arc::new(Mutex::new(node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::aQOS_PROFILE_DEFAULT)?));
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
@@ -86,27 +86,27 @@ impl ServerNode for CameraServer {
             }
         )?;
         let _cam = Arc::new(Mutex::new(videoio::VideoCapture::new(camera_id.into(), videoio::CAP_ANY)?));
-        // _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
-        // _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
+        _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
+        _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
         let _capture_delay = Arc::new(Mutex::new(capture_delay.into())); 
         Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        // let node_clone = Arc::clone(&*self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
-            let mut node = node_clone.lock().unwrap();
+            let node = *self._node.lock().unwrap();
             spin(&node);
         });
-        let active_clone = Arc::clone(&*self._active);
-        let delay_clone = Arc::clone(&*self._capture_delay);
-        let publisher_clone = Arc::clone(&*self._publisher);
-        let cam_clone = Arc::clone(&*self._cam);
+        // let active_clone = Arc::clone(&*self._active);
+        // let delay_clone = Arc::clone(&*self._capture_delay);
+        // let publisher_clone = Arc::clone(&*self._publisher);
+        // let cam_clone = Arc::clone(&*self._cam);
         let _publisher_thread = spawn(move || -> Result<(), Error> {
-            let mut publisher = publisher_clone.lock().unwrap();
-            let mut active = active_clone.lock().unwrap();
-            let delay = delay_clone.lock().unwrap();
-            let mut cam = cam_clone.lock().unwrap();
+            let publisher = *self._publisher.lock().unwrap();
+            let active = *self._active.lock().unwrap();
+            let delay = *self._cam.lock().unwrap();
+            let cam = *self._cam.lock().unwrap();
             loop {
                 if active {
                     let mut frame = Mat::default();
@@ -298,9 +298,9 @@ impl ServerNode for StepperMotorServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        // let node_clone = Arc::clone(&*self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
-            let mut node = node_clone.lock().unwrap();
+            let node = *self._node.lock().unwrap();
             spin(&node)
         });
     }
