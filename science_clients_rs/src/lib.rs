@@ -1,12 +1,12 @@
 use std::{env::args, sync::{Arc, Mutex}, str::ParseBoolError, num::ParseIntError, thread::spawn};
-use rclrs::{Node, RclrsError, Subscription, Client, Context, spin}
+use rclrs::{Node, RclrsError, Subscription, Client, Context, spin};
 use anyhow::{Result, Error};
 use input_macro::input;
 use colored::*;
 use opencv::{highgui::{imshow, wait_key}, prelude::*};
 use cv_bridge_rs::CvImage;
 use std_srvs::srv::*;
-use science_interfaces_rs::srv::*;ƒ
+use science_interfaces_rs::srv::*;
 use sensor_msgs::msg::Image;
 use dialoguer::{Select, Confirm, console::Term};
 
