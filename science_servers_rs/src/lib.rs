@@ -80,10 +80,10 @@ impl CameraServer {
                 std_srvs::srv::SetBool_Response{success: success, message: message}
             }
         )?;
-        let _cam = Arc::new(Mutex::new(videoio::VideoCapture::new(camera_id.into(), videoio::CAP_ANY)?));
-        _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
-        _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
-        let _capture_delay = Arc::new(Mutex::new(capture_delay.into())); 
+        let mut _cam = Arc::new(videoio::VideoCapture::new(camera_id.into(), videoio::CAP_ANY)?);
+        _cam.unwrap().set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
+        _cam.unwrap().set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
+        let _capture_delay = Arc::new(capture_delay.into()); 
         Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
     }
 
@@ -98,10 +98,10 @@ impl CameraServer {
         // let publisher_clone = Arc::clone(&*self._publisher);
         // let cam_clone = Arc::clone(&*self._cam);
         let _publisher_thread = spawn(move || -> Result<(), Error> {
-            let publisher = *self._publisher.lock().unwrap();
+            let publisher = *self._publisher.unwrap();
             let active = *self._active.lock().unwrap();
-            let delay = *self._cam.lock().unwrap();
-            let cam = *self._cam.lock().unwrap();
+            let delay = *self._capture_delay.unwrap();
+            let cam = *self._cam.unwrap();
             loop {
                 if active {
                     let mut frame = Mat::default();
