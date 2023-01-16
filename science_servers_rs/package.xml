@@ -13,8 +13,8 @@
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
   <depend>colored</depend>
-  <depend>input-macro</depend>
   <depend>rppal</depend>
+
 
 
   <export>

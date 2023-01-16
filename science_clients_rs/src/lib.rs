@@ -1,31 +1,32 @@
-use std::{env, sync::{Arc, Mutex}, str::ParseBoolError, num::ParseIntError};
+use std::{env::args, sync::{Arc, Mutex}, str::ParseBoolError, num::ParseIntError, thread::};
+use rclrs::{Node, RclrsError, Subscription, Client, Context, spin}
 use anyhow::{Result, Error};
 use input_macro::input;
 use colored::*;
-use opencv::{highgui, prelude::*};
+use opencv::{highgui::{imshow, wait_key}, prelude::*};
 use cv_bridge_rs::CvImage;
-use std_srvs::srv::SetBool;
-use science_interfaces_rs::srv::Position;
+use std_srvs::srv::*;
+use science_interfaces_rs::srv::*;ƒ
 use sensor_msgs::msg::Image;
 use dialoguer::{Select, Confirm, console::Term};
 
 
 pub struct OnOffClient {
-    _node: Arc<Mutex<rclrs::Node>>,
-    _client: Arc<rclrs::Client<SetBool>>
+    _node: Arc<Mutex<Node>>,
+    _client: Arc<Client<SetBool>>
 }
 
 impl OnOffClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
+        let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
-        let mut node = node_clone.lock()?;
+        let mut node = node_clone.lock().unwrap();
         let _client = node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         Ok(Self{_node:_node, _client:_client})
     }
 
     async fn send_request(&self, state: bool) -> Result<(), Error> {
-        let request = std_srvs::srv::SetBool_Request{data: state};
+        let request = SetBool_Request{data: state};
         let future = self._client.call_async(&request);
         println!("Request sent.");
         let response = future.await?;
@@ -35,9 +36,9 @@ impl OnOffClient {
 
     fn run(&self) {
         let node_clone = **self._node.clone();
-        let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
+        let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let mut node = node_clone.lock().unwrap();
-            rclrs::spin(&node)
+            spin(&node)
         });
     }
 
@@ -56,29 +57,29 @@ impl OnOffClient {
 }
 
 pub struct CameraClient {
-    _node: Arc<Mutex<rclrs::Node>>,
-    _client: Arc<rclrs::Client<SetBool>>,
-    _subscription: Arc<rclrs::Subscription<Image>>,
+    _node: Arc<Mutex<Node>>,
+    _client: Arc<Client<SetBool>>,
+    _subscription: Arc<Subscription<Image>>,
     _frame: Arc<Mutex<Option<Mat>>>
 }
 
 impl CameraClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
+        let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
-        let mut node = node_clone.lock()?;
+        let mut node = node_clone.lock().unwrap();
         let _client = node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
         let _frame = Arc::new(Mutex::new(None));
         let frame_clone = Arc::clone(&_frame);
         let _subscription = {
-            node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
+            node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), QOS_PROFILE_DEFAULT,
                 move |msg: Image| {
                     println!("Recieving new image!");
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
                     if frame_clone.lock().unwrap().as_ref().unwrap().size().unwrap().width > 0 {
-                        highgui::imshow(&device.replace("_", " "), &frame_clone.lock().unwrap().as_ref().unwrap());
+                        imshow(&device.replace("_", " "), &frame_clone.lock().unwrap().as_ref().unwrap());
                     }
-                    let _key = highgui::wait_key(10);
+                    let _key = wait_key(10);
                 },
             )?
         };
@@ -86,7 +87,7 @@ impl CameraClient {
     }
 
     async fn send_request(&self, state: bool) -> Result<(), Error> {
-        let request = std_srvs::srv::SetBool_Request{data: state};
+        let request = SetBool_Request{data: state};
         let future = self._client.call_async(&request);
         println!("Request sent.");
         let response = future.await?;
@@ -96,9 +97,9 @@ impl CameraClient {
 
     fn run(&self) {
         let node_clone = **self._node.clone();
-        let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
+        let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let mut node = node_clone.lock().unwrap();
-            rclrs::spin(&node)
+            spin(&node)
         });
     }
 
@@ -117,13 +118,13 @@ impl CameraClient {
 }
 
 pub struct PositionClient {
-    _node: Arc<Mutex<rclrs::Node>>,
-    _client: Arc<rclrs::Client<Position>>
+    _node: Arc<Mutex<Node>>,
+    _client: Arc<Client<Position>>
 }
 
 impl PositionClient {
     fn new(subsystem: String, device: String) -> Result<Self, Error> {
-        let _node = Arc::new(Mutex::new(rclrs::Node::new(&rclrs::Context::new(env::args())?, format!("{}_client", &device).as_str())?));
+        let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
         let _client = node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
@@ -131,7 +132,7 @@ impl PositionClient {
     }
 
     async fn send_request(&self, position: i32) -> Result<(), Error> {
-        let request = science_interfaces_rs::srv::Position_Request{position: position};
+        let request = Position_Request{position: position};
         let future = self._client.call_async(&request);
         println!("Request sent.");
         let response = future.await?;
@@ -147,9 +148,9 @@ impl PositionClient {
 
     fn run(&self) {
         let node_clone = **self._node.clone();
-        let _node_thread = std::thread::spawn(move || -> Result<(), Error> {
+        let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let mut node = node_clone.lock().unwrap();
-            rclrs::spin(&node)
+            spin(&node)
         });
     }
 
