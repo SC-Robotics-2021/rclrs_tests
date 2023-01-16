@@ -9,18 +9,13 @@ use rppal::gpio::{Gpio, OutputPin};
 use anyhow::{Result, Error};
 use colored::*;
 
-trait ServerNode {
-    fn new(subsystem: String, device: String, device_settings: HashMap) -> Result<Self, Error>;
-    fn run(&self) -> Result<(), Error>;
-}
-
 pub struct GPIOServer {
     _node: Arc<Mutex<Node>>,
     _pin: Arc<Mutex<OutputPin>>,
     _server: Arc<Service<SetBool>>,
 }
 
-impl ServerNode for GPIOServer {
+impl GPIOServer {
     fn new(subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
@@ -62,7 +57,7 @@ pub struct CameraServer {
     _server: Arc<Service<SetBool>>
 }
 
-impl ServerNode for CameraServer {
+impl CameraServer {
     fn new(subsystem: String, device: String, camera_id: u8, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
@@ -243,7 +238,7 @@ pub struct StepperMotorServer {
     _server: Arc<Service<Position>>
 }
 
-impl ServerNode for StepperMotorServer {
+impl StepperMotorServer {
     fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
         // Zero the platform's height
         TicDriver::set_current_limit(&3200);
