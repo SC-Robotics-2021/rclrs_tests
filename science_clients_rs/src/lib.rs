@@ -72,7 +72,7 @@ impl CameraClient {
         let _frame = Arc::new(Mutex::new(None));
         let frame_clone = Arc::clone(&_frame);
         let _subscription = {
-            node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), QOS_PROFILE_DEFAULT,
+            node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| {
                     println!("Recieving new image!");
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
