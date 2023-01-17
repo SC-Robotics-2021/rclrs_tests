@@ -1,8 +1,7 @@
 use std::{sync::{Arc, Mutex}, env::args, thread::{spawn, sleep}, time::Duration, process::Command, str::ParseBoolError, num::ParseIntError};
-use core::Vector;
 use rclrs::{Node, Service, Publisher, Context, spin, RclrsError, rmw_request_id_t};
 use science_interfaces_rs::srv::Position;
-use opencv::{prelude::*, videoio};
+use opencv::{prelude::*, videoio, core::Vector};
 use cv_bridge_rs::CvImage;
 use sensor_msgs::msg::Image;
 use std_srvs::srv::SetBool;
@@ -60,7 +59,7 @@ pub struct CameraServer {
 }
 
 impl CameraServer {
-    fn new(subsystem: String, device: String, camera_id: u8, camera_settings: core::Vector<i32>, capture_delay: u8) -> Result<Self, Error> { // capture delay is in milliseconds
+    fn new(subsystem: String, device: String, camera_id: u8, camera_settings: Vector<i32>, capture_delay: u8) -> Result<Self, Error> { // capture delay is in milliseconds
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
