@@ -62,7 +62,7 @@ impl CameraServer {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _publisher = Arc::new(Mutex::new(node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::aQOS_PROFILE_DEFAULT)?));
+        let _publisher = Arc::new(node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::aQOS_PROFILE_DEFAULT)?);
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
@@ -81,8 +81,8 @@ impl CameraServer {
             }
         )?;
         let mut _cam = Arc::new(videoio::VideoCapture::new(camera_id.into(), videoio::CAP_ANY)?);
-        _cam.unwrap().set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
-        _cam.unwrap().set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
+        _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
+        _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
         let _capture_delay = Arc::new(capture_delay.into()); 
         Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
     }
@@ -98,12 +98,12 @@ impl CameraServer {
         let publisher_clone = Arc::clone(&self._publisher);
         let cam_clone = Arc::clone(&self._cam);
         let _publisher_thread = spawn(move || -> Result<(), Error> {
-            let publisher = publisher_clone.lock().unwrap();
-            let active = active_clone.lock().unwrap();
-            let delay = delay_clone.lock().unwrap();
-            let cam = cam_clone.lock().unwrap();
+            // let publisher = publisher_clone.unwrap();
+            // let active = active_clone.unwrap();
+            // let delay = delay_clone.lock().unwrap();
+            // let cam = cam_clone.unwrap();
             loop {
-                if active {
+                if *active {
                     let mut frame = Mat::default();
                     cam.read(&mut frame);
                     println!("Publishing frame!");
