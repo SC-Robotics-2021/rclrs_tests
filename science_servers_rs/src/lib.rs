@@ -40,9 +40,9 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        // let node_clone = Arc::clone(&*self._node);
+        let node_clone = Arc::clone(&*self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
-            let node = *self._node.lock().unwrap();
+            let node = node_clone.lock().unwrap();
             spin(&node)
         });
     }
@@ -88,20 +88,20 @@ impl CameraServer {
     }
 
     fn run(&self) {
-        // let node_clone = Arc::clone(&*self._node);
+        let node_clone = Arc::clone(&*self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
-            let node = *self._node.lock().unwrap();
+            let node = node_clone.lock().unwrap();
             spin(&node);
         });
-        // let active_clone = Arc::clone(&*self._active);
-        // let delay_clone = Arc::clone(&*self._capture_delay);
-        // let publisher_clone = Arc::clone(&*self._publisher);
-        // let cam_clone = Arc::clone(&*self._cam);
+        let active_clone = Arc::clone(&*self._active);
+        let delay_clone = Arc::clone(&*self._capture_delay);
+        let publisher_clone = Arc::clone(&*self._publisher);
+        let cam_clone = Arc::clone(&*self._cam);
         let _publisher_thread = spawn(move || -> Result<(), Error> {
-            let publisher = *self._publisher.lock().unwrap();
-            let active = *self._active.lock().unwrap();
-            let delay = *self._capture_delay.lock().unwrap();
-            let cam = *self._cam.lock().unwrap();
+            let publisher = publisher_clone.lock().unwrap();
+            let active = active_clone.lock().unwrap();
+            let delay = delay_clone.lock().unwrap();
+            let cam = cam_clone.lock().unwrap();
             loop {
                 if active {
                     let mut frame = Mat::default();
@@ -292,11 +292,9 @@ impl StepperMotorServer {
         Ok(Self{_node:_node, _server:_server})
     }
 
-    fn run(&self) {
-        // let node_clone = Arc::clone(&*self._node);
-        let _node_thread = spawn(move || -> Result<(), RclrsError> {
-            let node = *self._node.lock().unwrap();
-            spin(&node)
-        });
-    }
+    let node_clone = Arc::clone(&*self._node);
+    let _node_thread = spawn(move || -> Result<(), RclrsError> {
+        let node = node_clone.lock().unwrap();
+        spin(&node);
+    });
 }
