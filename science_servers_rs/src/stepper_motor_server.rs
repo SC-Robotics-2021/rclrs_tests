@@ -1,7 +1,6 @@
-use science_servers_rs::PositionServer;
+use science_servers_rs::StepperMotorServer;
 
 fn main() {
-    let device = "stepper_motor";
-    let server = PositionServer::new(device).unwrap();
+    let server = StepperMotorServer::new().unwrap();
     server.run();
 }

@@ -249,7 +249,7 @@ pub struct StepperMotorServer {
 }
 
 impl StepperMotorServer {
-    pub fn new(device: String) -> Result<Self, Error> {
+    pub fn new() -> Result<Self, Error> {
         // Zero the platform's height
         TicDriver::set_current_limit(&3200);
         TicDriver::set_step_mode(TicStepMode::Microstep256);
@@ -266,10 +266,10 @@ impl StepperMotorServer {
         TicDriver::halt_and_set_position(&0);
         TicDriver::deenergize();
         TicDriver::enter_safe_start();
-        let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
+        let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, "stepper_motor")?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _server = node.create_service(format!("/science/{}/cmd", &device).as_str(),
+        let _server = node.create_service("/science/stepper_motor/cmd",
             move |_request_header: &rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
                 let success: bool;
                 let message: String;
