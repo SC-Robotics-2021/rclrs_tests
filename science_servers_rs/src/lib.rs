@@ -103,7 +103,7 @@ impl CameraServer {
             // let delay = delay_clone.lock().unwrap();
             // let cam = cam_clone.unwrap();
             loop {
-                if active {
+                if *active {
                     let mut frame = Mat::default();
                     cam.read(&mut frame);
                     println!("Publishing frame!");
