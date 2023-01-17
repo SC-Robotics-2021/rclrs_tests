@@ -93,7 +93,7 @@ impl CameraServer {
             let node = node_clone.lock().unwrap();
             spin(&node)
         });
-        let active_clone = Arc::clone(&self._active);
+        let active_clone = *Arc::clone(&self._active);
         let delay = Arc::clone(&self._capture_delay);
         let publisher = Arc::clone(&self._publisher);
         let cam = Arc::clone(&self._cam);
