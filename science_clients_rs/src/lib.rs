@@ -160,7 +160,7 @@ impl PositionClient {
         while proceed {
             loop {
                 match input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>() {
-                    Ok(input: i32) => {
+                    Ok(input) => {
                         if input < 0 {
                             let _ = &self.send_request(0);
                         } else {
@@ -168,7 +168,7 @@ impl PositionClient {
                         }
                         break;
                     },
-                    Err(_: ParseIntError) => { unreachable!(); }
+                    ParseIntError => { unreachable!(); }
                 }
             }
             proceed = Confirm::new().with_prompt("Do you want to continue command and control?").interact()?;
