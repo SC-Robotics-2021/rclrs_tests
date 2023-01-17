@@ -16,13 +16,13 @@ pub struct GPIOServer {
 }
 
 impl GPIOServer {
-    pub fn new(subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
+    pub fn new(device: String, pin_num: u8) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
         let _pin = Arc::new(Mutex::new(Gpio::new()?.get(pin_num)?.into_output_low()));
         let pin_clone =  Arc::clone(&_pin);
-        let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+        let _server = node.create_service(format!("/science/{}/cmd", &device).as_str(),
             move |_request_header: &rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                 let mut pin = pin_clone.lock().unwrap();
                 let message: String;
@@ -53,20 +53,19 @@ pub struct CameraServer {
     _publisher: Arc<Publisher<Image>>,
     _camera_id: Arc<i32>,
     _camera_settings: Arc<Vector<i32>>,
-    _capture_delay: Arc<u64>,
     _active: Arc<Mutex<bool>>,
     _server: Arc<Service<SetBool>>
 }
 
 impl CameraServer {
-    pub fn new(subsystem: String, device: String, camera_id: i32, camera_settings: Vector<i32>, capture_delay: u64) -> Result<Self, Error> { // capture delay is in milliseconds
+    pub fn new(device: String, camera_id: i32, camera_settings: Vector<i32>) -> Result<Self, Error> { // capture delay is in milliseconds
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _publisher = Arc::new(node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?);
+        let _publisher = Arc::new(node.create_publisher(format!("/science/{}/images", &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?);
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
-        let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+        let _server = node.create_service(format!("/science/{}/cmd", &device).as_str(),
             move |_request_header: &rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                 let message: String;
                 let success: bool;
@@ -84,8 +83,7 @@ impl CameraServer {
         )?;
         let _camera_id = Arc::new(camera_id);
         let _camera_settings = Arc::new(camera_settings);
-        let _capture_delay = Arc::new(capture_delay); 
-        Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _camera_id:_camera_id, _camera_settings:_camera_settings, _capture_delay:_capture_delay, _active:_active})
+        Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _camera_id:_camera_id, _camera_settings:_camera_settings, _active:_active})
     }
 
     pub fn run(&self) {
@@ -98,7 +96,6 @@ impl CameraServer {
         let publisher = Arc::clone(&self._publisher);
         let camera_id = Arc::clone(&self._camera_id);
         let camera_settings = Arc::clone(&self._camera_settings);
-        let capture_delay = Arc::clone(&self._capture_delay);
         let active_clone = Arc::clone(&self._active);
 
         let _publisher_thread = spawn(move || {
@@ -252,7 +249,7 @@ pub struct StepperMotorServer {
 }
 
 impl StepperMotorServer {
-    pub fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
+    pub fn new(device: String) -> Result<Self, Error> {
         // Zero the platform's height
         TicDriver::set_current_limit(&3200);
         TicDriver::set_step_mode(TicStepMode::Microstep256);
@@ -272,7 +269,7 @@ impl StepperMotorServer {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
+        let _server = node.create_service(format!("/science/{}/cmd", &device).as_str(),
             move |_request_header: &rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
                 let success: bool;
                 let message: String;

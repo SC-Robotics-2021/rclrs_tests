@@ -16,11 +16,11 @@ pub struct OnOffClient {
 }
 
 impl OnOffClient {
-    pub fn new(subsystem: String, device: String) -> Result<Self, Error> {
+    pub fn new(device: String) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _client = node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
+        let _client = node.create_client::<SetBool>(format!("/science/{}/cmd", &device).as_str())?;
         Ok(Self{_node:_node, _client:_client})
     }
 
@@ -63,15 +63,15 @@ pub struct CameraClient {
 }
 
 impl CameraClient {
-    pub fn new(subsystem: String, device: String) -> Result<Self, Error> {
+    pub fn new(device: String) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _client = node.create_client::<SetBool>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
+        let _client = node.create_client::<SetBool>(format!("/science/{}/cmd", &device).as_str())?;
         let _frame = Arc::new(Mutex::new(None));
         let frame_clone = Arc::clone(&_frame);
         let _subscription = {
-            node.create_subscription(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
+            node.create_subscription(format!("/science/{}/images", &device).as_str(), rclrs::QOS_PROFILE_DEFAULT,
                 move |msg: Image| {
                     println!("Recieving new image!");
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
@@ -122,11 +122,11 @@ pub struct PositionClient {
 }
 
 impl PositionClient {
-    pub fn new(subsystem: String, device: String) -> Result<Self, Error> {
+    pub fn new(device: String) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _client = node.create_client::<Position>(format!("/{}/{}/cmd", &subsystem, &device).as_str())?;
+        let _client = node.create_client::<Position>(format!("/science/{}/cmd", &device).as_str())?;
         Ok(Self{_node:_node, _client:_client})
     }
 
