@@ -98,10 +98,10 @@ impl CameraServer {
         // let publisher_clone = Arc::clone(&*self._publisher);
         // let cam_clone = Arc::clone(&*self._cam);
         let _publisher_thread = spawn(move || -> Result<(), Error> {
-            let publisher = *self._publisher.unwrap();
+            let publisher = *self._publisher.lock().unwrap();
             let active = *self._active.lock().unwrap();
-            let delay = *self._capture_delay.unwrap();
-            let cam = *self._cam.unwrap();
+            let delay = *self._capture_delay.lock().unwrap();
+            let cam = *self._cam.lock().unwrap();
             loop {
                 if active {
                     let mut frame = Mat::default();
