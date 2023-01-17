@@ -51,7 +51,7 @@ impl GPIOServer {
 pub struct CameraServer {
     _node: Arc<Mutex<Node>>,
     _publisher: Arc<Publisher<Image>>,
-    _camera_id: Arc<u8>,
+    _camera_id: Arc<i32>,
     _camera_settings: Arc<Vector<i32>>,
     _capture_delay: Arc<u8>,
     _active: Arc<Mutex<bool>>,
@@ -102,7 +102,7 @@ impl CameraServer {
 
         let _publisher_thread = spawn(move || {
             let active = active_clone.lock().unwrap();
-            let cam = videoio::VideoCapture::new_with_params(*camera_id.into():i32, videoio::CAP_ANY, &*camera_settings).unwrap();
+            let cam = videoio::VideoCapture::new_with_params(*camera_id, videoio::CAP_ANY, &*camera_settings).unwrap();
             loop {
                 if *active {
                     let mut frame = Mat::default();
