@@ -1,6 +1,6 @@
-use science_clients_rs::*;
+use science_clients_rs::CameraClient;
  
-fn main() -> Result<(), Error> {
-    let client = CameraClient::new(subsystem="science", device="uv camera");
-    client.cli_control()
+fn main() {
+    let client = CameraClient::new(subsystem="science", device="uv_camera");
+    let _ = client.cli_control();
 }

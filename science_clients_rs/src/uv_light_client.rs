@@ -1,6 +1,6 @@
-use science_clients_rs::*;
+use science_clients_rs::OnOffClient;
  
-fn main() -> Result<(), Error> {
+fn main() {
     let client = OnOffClient::new(subsystem="science", device="uv_light");
-    client.cli_control()
+    let _ = client.cli_control();
 }

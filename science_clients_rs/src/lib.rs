@@ -47,7 +47,7 @@ impl OnOffClient {
         let mut proceed: bool = true;
         while proceed {
             match Select::new().item("Turn off").item("Turn on").interact_on_opt(&Term::stdout())? {
-                Some(input) => { &self.send_request(input != 0); },
+                Some(input) => { let _ = &self.send_request(input != 0); },
                 None => { unreachable!(); }
             }
             proceed = Confirm::new().with_prompt("Do you want to continue command and control?").interact()?;
