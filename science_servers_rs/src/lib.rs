@@ -107,9 +107,9 @@ impl CameraServer {
             loop {
                 if *active {
                     let mut frame = Mat::default();
-                    cam.read(&mut frame);
+                    let _ = cam.read(&mut frame);
                     println!("Publishing frame!");
-                    publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
+                    let _ = publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
                     sleep(Duration::from_millis(*capture_delay));
                 }
             }
@@ -263,8 +263,8 @@ impl StepperMotorServer {
         let mut node = node_clone.lock().unwrap();
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
-                let mut success: bool;
-                let mut message: String;
+                let success: bool;
+                let message: String;
                 println!("New position requested!");
                 let requested_displacement: i32 = request.position-TicDriver::get_current_position().unwrap();
                 if requested_displacement != 0 {

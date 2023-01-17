@@ -77,7 +77,7 @@ impl CameraClient {
                     println!("Recieving new image!");
                     *frame_clone.lock().unwrap() = Some(CvImage::from_imgmsg(msg).as_cvmat("bgr8".to_string()));
                     if frame_clone.lock().unwrap().as_ref().unwrap().size().unwrap().width > 0 {
-                        imshow(&device.replace("_", " "), &frame_clone.lock().unwrap().as_ref().unwrap());
+                        let _ = imshow(&device.replace("_", " "), &frame_clone.lock().unwrap().as_ref().unwrap());
                     }
                     let _key = wait_key(10);
                 },
@@ -108,7 +108,7 @@ impl CameraClient {
         let mut proceed: bool = true;
         while proceed {
             match Select::new().item("Turn off").item("Turn on").interact_on_opt(&Term::stdout())? {
-                Some(input) => { &self.send_request(input != 0); },
+                Some(input) => { let _ = &self.send_request(input != 0); },
                 None => { unreachable!(); }
             }
             proceed = Confirm::new().with_prompt("Do you want to continue command and control?").interact()?;
@@ -162,9 +162,9 @@ impl PositionClient {
                 match input!("Enter an integer position value ({} | {}): ", "minimum => 0".bold().yellow(), "maximum => 2147483647".bold().yellow()).trim().to_lowercase().parse::<i32>() {
                     Ok(input) => {
                         if input < 0 {
-                            &self.send_request(0);
+                            let _ = &self.send_request(0);
                         } else {
-                            &self.send_request(input);
+                            let _ = &self.send_request(input);
                         }
                         break;
                     },
