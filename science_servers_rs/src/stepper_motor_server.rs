@@ -1,6 +1,8 @@
-use science_servers_rs::PositionClient;
+use science_servers_rs::PositionServer;
 
 fn main() {
-    let server = PositionClient::new(subsystem="science", device="stepper_motor").unwrap();
+    let subsystem = "science";
+    let device = "stepper_motor";
+    let server = PositionServer::new(subsystem, device).unwrap();
     server.run();
 }
