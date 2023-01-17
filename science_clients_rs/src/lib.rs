@@ -35,7 +35,7 @@ impl OnOffClient {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        let node_clone = Arc::clone(&self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let node = node_clone.lock().unwrap();
             spin(&node)
@@ -96,7 +96,7 @@ impl CameraClient {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        let node_clone = Arc::clone(&self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let node = node_clone.lock().unwrap();
             spin(&node)
@@ -147,7 +147,7 @@ impl PositionClient {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        let node_clone = Arc::clone(&self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let node = node_clone.lock().unwrap();
             spin(&node)

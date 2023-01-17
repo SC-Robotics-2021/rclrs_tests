@@ -40,7 +40,7 @@ impl GPIOServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        let node_clone = Arc::clone(&self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let node = node_clone.lock().unwrap();
             spin(&node)
@@ -88,15 +88,15 @@ impl CameraServer {
     }
 
     fn run(&self) {
-        let node_clone = Arc::clone(&*self._node);
+        let node_clone = Arc::clone(&self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let node = node_clone.lock().unwrap();
-            spin(&node);
+            spin(&node)
         });
-        let active_clone = Arc::clone(&*self._active);
-        let delay_clone = Arc::clone(&*self._capture_delay);
-        let publisher_clone = Arc::clone(&*self._publisher);
-        let cam_clone = Arc::clone(&*self._cam);
+        let active_clone = Arc::clone(&self._active);
+        let delay_clone = Arc::clone(&self._capture_delay);
+        let publisher_clone = Arc::clone(&self._publisher);
+        let cam_clone = Arc::clone(&self._cam);
         let _publisher_thread = spawn(move || -> Result<(), Error> {
             let publisher = publisher_clone.lock().unwrap();
             let active = active_clone.lock().unwrap();
@@ -292,9 +292,9 @@ impl StepperMotorServer {
         Ok(Self{_node:_node, _server:_server})
     }
 
-    let node_clone = Arc::clone(&*self._node);
+    let node_clone = Arc::clone(&self._node);
     let _node_thread = spawn(move || -> Result<(), RclrsError> {
         let node = node_clone.lock().unwrap();
-        spin(&node);
+        spin(&node)
     });
 }
