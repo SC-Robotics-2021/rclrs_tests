@@ -59,7 +59,7 @@ pub struct CameraServer {
 }
 
 impl CameraServer {
-    fn new(subsystem: String, device: String, camera_id: u8, camera_settings: Vector<i32>, capture_delay: u8) -> Result<Self, Error> { // capture delay is in milliseconds
+    fn new(subsystem: String, device: String, camera_id: i32, camera_settings: Vector<i32>, capture_delay: u8) -> Result<Self, Error> { // capture delay is in milliseconds
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -102,7 +102,7 @@ impl CameraServer {
 
         let _publisher_thread = spawn(move || {
             let active = active_clone.lock().unwrap();
-            let cam = videoio::VideoCapture::new_with_params(*<Arc<u8> as Into<i32>>::into(camera_id), videoio::CAP_ANY, camera_settings).unwrap();
+            let cam = videoio::VideoCapture::new_with_params(*camera_id.into():i32, videoio::CAP_ANY, &*camera_settings).unwrap();
             loop {
                 if *active {
                     let mut frame = Mat::default();
