@@ -1,4 +1,5 @@
 use std::{sync::{Arc, Mutex}, env::args, thread::{spawn, sleep}, time::Duration, process::Command, str::ParseBoolError, num::ParseIntError};
+use core::Vector;
 use rclrs::{Node, Service, Publisher, Context, spin, RclrsError, rmw_request_id_t};
 use science_interfaces_rs::srv::Position;
 use opencv::{prelude::*, videoio};
@@ -51,14 +52,15 @@ impl GPIOServer {
 pub struct CameraServer {
     _node: Arc<Mutex<Node>>,
     _publisher: Arc<Publisher<Image>>,
-    _cam: Arc<videoio::VideoCapture>,
+    _camera_id: Arc<u8>,
+    _camera_settings: Arc<Vector<i32>>,
     _capture_delay: Arc<u64>,
     _active: Arc<Mutex<bool>>,
     _server: Arc<Service<SetBool>>
 }
 
 impl CameraServer {
-    fn new(subsystem: String, device: String, camera_id: u8, frame_width: u16, frame_height: u16, capture_delay: u16) -> Result<Self, Error> { // capture delay is in milliseconds
+    fn new(subsystem: String, device: String, camera_id: u8, camera_settings: core::Vector<i32>) -> Result<Self, Error> { // capture delay is in milliseconds
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -80,11 +82,10 @@ impl CameraServer {
                 std_srvs::srv::SetBool_Response{success: success, message: message}
             }
         )?;
-        let mut _cam = Arc::new(videoio::VideoCapture::new(camera_id.into(), videoio::CAP_ANY)?);
-        _cam.set(videoio::CAP_PROP_FRAME_WIDTH, frame_width.into());
-        _cam.set(videoio::CAP_PROP_FRAME_HEIGHT, frame_height.into());
-        let _capture_delay = Arc::new(capture_delay.into()); 
-        Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _cam:_cam, _capture_delay:_capture_delay, _active:_active})
+        let _camera_id = Arc::new(camera_id);
+        let _camera_settings = Arc::new(camera_settings);
+        let _capture_delay = Arc::new(capture_delay); 
+        Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _camera_id:_camera_id, _camera_settings:_camera_settings, _capture_delay:_capture_delay, _active:_active})
     }
 
     fn run(&self) {
@@ -93,22 +94,23 @@ impl CameraServer {
             let node = node_clone.lock().unwrap();
             spin(&node)
         });
-        let active_clone = Arc::clone(&self._active);
-        let delay = Arc::clone(&self._capture_delay);
+
         let publisher = Arc::clone(&self._publisher);
-        let cam = Arc::clone(&self._cam);
-        let _publisher_thread = spawn(move || -> Result<(), Error> {
-            // let publisher = publisher_clone.unwrap();
+        let camera_id = Arc::clone(&self._camera_id);
+        let camera_settings = Arc::clone(&self._camera_settings);
+        let capture_delay = Arc::clone(&self._capture_delay);
+        let active_clone = Arc::clone(&self._active);
+
+        let _publisher_thread = spawn(move || {
             let active = active_clone.lock().unwrap();
-            // let delay = delay_clone.lock().unwrap();
-            // let cam = cam_clone.unwrap();
+            let cam = videoio::VideoCapture::new_with_params(*camera_id.into(), videoio::CAP_ANY, *camera_settings)?;
             loop {
                 if *active {
                     let mut frame = Mat::default();
                     cam.read(&mut frame);
                     println!("Publishing frame!");
                     publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                    sleep(Duration::from_millis(*delay));
+                    sleep(Duration::from_millis(*capture_delay.into()));
                 }
             }
         });
