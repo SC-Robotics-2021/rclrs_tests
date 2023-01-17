@@ -53,13 +53,13 @@ pub struct CameraServer {
     _publisher: Arc<Publisher<Image>>,
     _camera_id: Arc<i32>,
     _camera_settings: Arc<Vector<i32>>,
-    _capture_delay: Arc<u8>,
+    _capture_delay: Arc<u64>,
     _active: Arc<Mutex<bool>>,
     _server: Arc<Service<SetBool>>
 }
 
 impl CameraServer {
-    fn new(subsystem: String, device: String, camera_id: i32, camera_settings: Vector<i32>, capture_delay: u8) -> Result<Self, Error> { // capture delay is in milliseconds
+    fn new(subsystem: String, device: String, camera_id: i32, camera_settings: Vector<i32>, capture_delay: u64) -> Result<Self, Error> { // capture delay is in milliseconds
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -109,7 +109,7 @@ impl CameraServer {
                     cam.read(&mut frame);
                     println!("Publishing frame!");
                     publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                    sleep(Duration::from_millis(*capture_delay.into()));
+                    sleep(Duration::from_millis(*capture_delay));
                 }
             }
         });
