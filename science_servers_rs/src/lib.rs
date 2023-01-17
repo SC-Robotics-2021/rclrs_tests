@@ -25,7 +25,7 @@ impl GPIOServer {
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
                 let mut pin = pin_clone.lock().unwrap();
-                let mut message: String;
+                let message: String;
                 if request.data {
                     pin.set_high();
                     message = format!("{} is on.", &device);
@@ -68,10 +68,11 @@ impl CameraServer {
         let active_clone =  Arc::clone(&_active);
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rmw_request_id_t, request: std_srvs::srv::SetBool_Request| -> std_srvs::srv::SetBool_Response {
-                let mut message: String;
-                let success: bool = true;
+                let message: String;
+                let success: bool;
                 if request.data != *active_clone.lock().unwrap() {
                     *active_clone.lock().unwrap() = request.data;
+                    success = true;
                     message = format!("{} is now in requested state.", &device).to_string();
 
                 } else {
@@ -102,7 +103,7 @@ impl CameraServer {
 
         let _publisher_thread = spawn(move || {
             let active = active_clone.lock().unwrap();
-            let cam = videoio::VideoCapture::new_with_params(*camera_id, videoio::CAP_ANY, &*camera_settings).unwrap();
+            let mut cam = videoio::VideoCapture::new_with_params(*camera_id, videoio::CAP_ANY, &*camera_settings).unwrap();
             loop {
                 if *active {
                     let mut frame = Mat::default();
@@ -262,8 +263,8 @@ impl StepperMotorServer {
         let mut node = node_clone.lock().unwrap();
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
             move |_request_header: &rmw_request_id_t, request: science_interfaces_rs::srv::Position_Request| -> science_interfaces_rs::srv::Position_Response {
-                let mut success: bool = true;
-                let mut message: String = String::new();
+                let mut success: bool;
+                let mut message: String;
                 println!("New position requested!");
                 let requested_displacement: i32 = request.position-TicDriver::get_current_position().unwrap();
                 if requested_displacement != 0 {
@@ -283,6 +284,8 @@ impl StepperMotorServer {
                     }
                     TicDriver::deenergize();
                     TicDriver::enter_safe_start();
+                    success = true;
+                    message = String::new();
                 } else {
                     success = false;
                     message = "Already at requested position.".yellow().to_string();
