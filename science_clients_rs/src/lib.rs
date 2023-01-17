@@ -10,14 +10,13 @@ use science_interfaces_rs::srv::*;
 use sensor_msgs::msg::Image;
 use dialoguer::{Select, Confirm, console::Term};
 
-
 pub struct OnOffClient {
     _node: Arc<Mutex<Node>>,
     _client: Arc<Client<SetBool>>
 }
 
 impl OnOffClient {
-    fn new(subsystem: String, device: String) -> Result<Self, Error> {
+    pub fn new(subsystem: String, device: String) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -42,7 +41,7 @@ impl OnOffClient {
         });
     }
 
-    fn cli_control(&self) -> Result<(), Error> {
+    pub fn cli_control(&self) -> Result<(), Error> {
         self.run();
         let mut proceed: bool = true;
         while proceed {
@@ -64,7 +63,7 @@ pub struct CameraClient {
 }
 
 impl CameraClient {
-    fn new(subsystem: String, device: String) -> Result<Self, Error> {
+    pub fn new(subsystem: String, device: String) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -103,7 +102,7 @@ impl CameraClient {
         });
     }
 
-    fn cli_control(&self) -> Result<(), Error> {
+    pub fn cli_control(&self) -> Result<(), Error> {
         self.run();
         let mut proceed: bool = true;
         while proceed {
@@ -123,7 +122,7 @@ pub struct PositionClient {
 }
 
 impl PositionClient {
-    fn new(subsystem: String, device: String) -> Result<Self, Error> {
+    pub fn new(subsystem: String, device: String) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_client", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -154,7 +153,7 @@ impl PositionClient {
         });
     }
 
-    fn cli_control(&self) -> Result<(), Error> {
+    pub fn cli_control(&self) -> Result<(), Error> {
         self.run();
         let mut proceed: bool = true;
         while proceed {

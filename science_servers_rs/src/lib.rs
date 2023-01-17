@@ -16,7 +16,7 @@ pub struct GPIOServer {
 }
 
 impl GPIOServer {
-    fn new(subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
+    pub fn new(subsystem: String, device: String, pin_num: u8) -> Result<Self, Error> {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -39,7 +39,7 @@ impl GPIOServer {
         Ok(Self{_node:_node, _server:_server, _pin:_pin})
     }
 
-    fn run(&self) {
+    pub fn run(&self) {
         let node_clone = Arc::clone(&self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let node = node_clone.lock().unwrap();
@@ -59,7 +59,7 @@ pub struct CameraServer {
 }
 
 impl CameraServer {
-    fn new(subsystem: String, device: String, camera_id: i32, camera_settings: Vector<i32>, capture_delay: u64) -> Result<Self, Error> { // capture delay is in milliseconds
+    pub fn new(subsystem: String, device: String, camera_id: i32, camera_settings: Vector<i32>, capture_delay: u64) -> Result<Self, Error> { // capture delay is in milliseconds
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -88,7 +88,7 @@ impl CameraServer {
         Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _camera_id:_camera_id, _camera_settings:_camera_settings, _capture_delay:_capture_delay, _active:_active})
     }
 
-    fn run(&self) {
+    pub fn run(&self) {
         let node_clone = Arc::clone(&self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let node = node_clone.lock().unwrap();
@@ -116,7 +116,7 @@ impl CameraServer {
         });
     }
 
-    fn define_settings(frame_width: i32, frame_height: i32, fps: i32) -> Vector<i32> {
+    pub fn define_settings(frame_width: i32, frame_height: i32, fps: i32) -> Vector<i32> {
         let mut settings = Vector::with_capacity(6);
         settings.push(videoio::CAP_PROP_FRAME_WIDTH);
         settings.push(frame_width);
@@ -252,7 +252,7 @@ pub struct StepperMotorServer {
 }
 
 impl StepperMotorServer {
-    fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
+    pub fn new(&self, subsystem: String, device: String) -> Result<Self, Error> {
         // Zero the platform's height
         TicDriver::set_current_limit(&3200);
         TicDriver::set_step_mode(TicStepMode::Microstep256);
@@ -307,7 +307,7 @@ impl StepperMotorServer {
         Ok(Self{_node:_node, _server:_server})
     }
 
-    fn run(&self) {
+    pub fn run(&self) {
         let node_clone = Arc::clone(&self._node);
         let _node_thread = spawn(move || -> Result<(), RclrsError> {
             let node = node_clone.lock().unwrap();
