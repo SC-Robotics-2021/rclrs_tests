@@ -1,7 +1,7 @@
 use std::{sync::{Arc, Mutex}, env::args, thread::{spawn, sleep}, time::Duration, process::Command, str::ParseBoolError, num::ParseIntError};
 use rclrs::{Node, Service, Publisher, Context, spin, RclrsError, rmw_request_id_t};
 use science_interfaces_rs::srv::Position;
-use opencv::{prelude::*, highgui, videoio};
+use opencv::{prelude::*, videoio};
 use cv_bridge_rs::CvImage;
 use sensor_msgs::msg::Image;
 use std_srvs::srv::SetBool;
@@ -108,7 +108,7 @@ impl CameraServer {
                     cam.read(&mut frame);
                     println!("Publishing frame!");
                     publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                    sleep(Duration::from_millis(delay));
+                    sleep(Duration::from_millis(*delay));
                 }
             }
         });
@@ -292,9 +292,11 @@ impl StepperMotorServer {
         Ok(Self{_node:_node, _server:_server})
     }
 
-    let node_clone = Arc::clone(&self._node);
-    let _node_thread = spawn(move || -> Result<(), RclrsError> {
-        let node = node_clone.lock().unwrap();
-        spin(&node)
-    });
+    fn run(&self) {
+        let node_clone = Arc::clone(&self._node);
+        let _node_thread = spawn(move || -> Result<(), RclrsError> {
+            let node = node_clone.lock().unwrap();
+            spin(&node)
+        });
+    }
 }
