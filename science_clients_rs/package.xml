@@ -1,5 +1,5 @@
 <package format="3">
-  <name>science_servers_rs</name>
+  <name>science_clients_rs</name>
   <version>1.0.0</version>
   <description>This package contains server-side binaries for the SC Robotics science command and control using Rust and ROS2</description>
   <author email="austinlake04@gmail.com">Austin Lake</author>
