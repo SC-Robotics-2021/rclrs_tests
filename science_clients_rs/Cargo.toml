@@ -6,28 +6,28 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [[bin]]
 name = "brush_client"
-path = "src/brush_client.rs"
+path = "./src/brush_client.rs"
 [[bin]]
 name = "ir_camera_client"
-path = "src/ir_camera_client.rs"
+path = "./src/ir_camera_client.rs"
 [[bin]]
 name = "microscope_client"
-path = "src/microscope_client.rs"
+path = "./src/microscope_client.rs"
 [[bin]]
 name = "stepper_motor_client"
-path = "src/stepper_motor_client.rs"
+path = "./src/stepper_motor_client.rs"
 [[bin]]
 name = "uv_camera_client"
-path = "src/uv_camera_client.rs"
+path = "./src/uv_camera_client.rs"
 [[bin]]
 name = "uv_light_client"
-path = "src/uv_light_client.rs"
+path = "./src/uv_light_client.rs"
 [[bin]]
 name = "vacuum_client"
-path = "src/vacuum_client.rs"
+path = "./src/vacuum_client.rs"
 [[bin]]
 name = "water_pump_client"
-path = "src/water_pump_client.rs"
+path = "./src/water_pump_client.rs"
 
 [dependencies]
 anyhow = "*"
