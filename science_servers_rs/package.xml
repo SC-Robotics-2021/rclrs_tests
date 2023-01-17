@@ -15,8 +15,6 @@
   <depend>colored</depend>
   <depend>rppal</depend>
 
-
-
   <export>
     <build_type>ament_cargo</build_type>
   </export>

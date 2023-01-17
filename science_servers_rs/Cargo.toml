@@ -4,6 +4,31 @@ version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "brush_server"
+path = "src/brush_server.rs"
+[[bin]]
+name = "ir_camera_server"
+path = "src/ir_camera_server.rs"
+[[bin]]
+name = "microscope_server"
+path = "src/microscope_server.rs"
+[[bin]]
+name = "stepper_motor_server"
+path = "src/stepper_motor_server.rs"
+[[bin]]
+name = "uv_camera_server"
+path = "src/uv_camera_server.rs"
+[[bin]]
+name = "uv_light_server"
+path = "src/uv_light_server.rs"
+[[bin]]
+name = "vacuum_server"
+path = "src/vacuum_server.rs"
+[[bin]]
+name = "water_pump_server"
+path = "src/water_pump_server.rs"
+
 
 [dependencies]
 anyhow = "*"
