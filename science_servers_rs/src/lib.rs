@@ -110,7 +110,7 @@ impl CameraServer {
                     let _ = cam.read(&mut frame);
                     println!("Publishing frame!");
                     let _ = publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                    sleep(Duration::from_millis(1/(*camera_settings.get(5)?)));
+                    sleep(Duration::from_millis(1/(camera_settings.get(5)?)));
                 }
             }
         });
