@@ -110,7 +110,7 @@ impl CameraServer {
                     let _ = cam.read(&mut frame);
                     println!("Publishing frame!");
                     let _ = publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                    sleep(Duration::from_millis(1/&*camera_settings[5]));
+                    sleep(Duration::from_millis(1/(*camera_settings.get(5)?)));
                 }
             }
         });
@@ -118,12 +118,12 @@ impl CameraServer {
 
     fn define_settings(frame_width: i32, frame_height: i32, fps: i32) -> Vector<i32> {
         let mut settings = Vector::with_capacity(6);
-        settings[0] = videoio::CAP_PROP_FRAME_WIDTH;
-        settings[1] = frame_width;
-        settings[2] = videoio::CAP_PROP_FRAME_HEIGHT;
-        settings[3] = frame_height;
-        settings[4] = videoio::CAP_PROP_FPS;
-        settings[5] = fps;
+        settings.push(videoio::CAP_PROP_FRAME_WIDTH);
+        settings.push(frame_width);
+        settings.push(videoio::CAP_PROP_FRAME_HEIGHT);
+        settings.push(frame_height);
+        settings.push(videoio::CAP_PROP_FPS);
+        settings.push(fps);
         settings
     }
 }

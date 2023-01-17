@@ -1,9 +1,10 @@
 <package format="3">
   <name>science_servers_rs</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="user@todo.todo">user</maintainer>
-  <license>TODO: License declaration</license>
+  <version>1.0.0</version>
+  <description>This package contains server-side binaries for the SC Robotics science command and control using Rust and ROS2</description>
+  <author email="austinlake04@gmail.com">Austin Lake</author>
+  <maintainer email="austinlake04@gmail.com">Austin Lake</maintainer>
+  <license>BSD 3-Clause License</license>
 
   <exec_depend>science_interfaces_rs</exec_depend>
   <depend>anyhow</depend>
