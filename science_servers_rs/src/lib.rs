@@ -1,8 +1,8 @@
-use std::{sync::{Arc, Mutex}, env::args, thread::{spawn, sleep}, time::Duration::from_millis, process::Command, str::ParseBoolError, num::ParseIntError};
+use std::{sync::{Arc, Mutex}, env::args, thread::{spawn, sleep}, time::Duration, process::Command, str::ParseBoolError, num::ParseIntError};
 use rclrs::{Node, Service, Publisher, Context, spin, RclrsError, rmw_request_id_t};
 use science_interfaces_rs::srv::Position;
 use opencv::{prelude::*, highgui, videoio};
-use cv_bridge_rs::CvImage::from_cvmat;
+use cv_bridge_rs::CvImage;
 use sensor_msgs::msg::Image;
 use std_srvs::srv::SetBool;
 use rppal::gpio::{Gpio, OutputPin};
@@ -51,7 +51,7 @@ impl GPIOServer {
 pub struct CameraServer {
     _node: Arc<Mutex<Node>>,
     _publisher: Arc<Publisher<Image>>,
-    _cam: Arc<videoio::VideoCapture>>,
+    _cam: Arc<videoio::VideoCapture>,
     _capture_delay: Arc<u64>,
     _active: Arc<Mutex<bool>>,
     _server: Arc<Service<SetBool>>
@@ -62,7 +62,7 @@ impl CameraServer {
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
-        let _publisher = Arc::new(node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::aQOS_PROFILE_DEFAULT)?);
+        let _publisher = Arc::new(node.create_publisher(format!("/{}/{}/images", &subsystem, &device).as_str(), rclrs::QOS_PROFILE_DEFAULT)?);
         let _active = Arc::new(Mutex::new(false));
         let active_clone =  Arc::clone(&_active);
         let _server = node.create_service(format!("/{}/{}/cmd", &subsystem, &device).as_str(),
@@ -93,22 +93,22 @@ impl CameraServer {
             let node = node_clone.lock().unwrap();
             spin(&node)
         });
-        let active_clone = Arc::clone(&self._active);
-        let delay_clone = Arc::clone(&self._capture_delay);
-        let publisher_clone = Arc::clone(&self._publisher);
-        let cam_clone = Arc::clone(&self._cam);
+        let active = *Arc::clone(&self._active);
+        let delay = Arc::clone(&self._capture_delay);
+        let publisher = Arc::clone(&self._publisher);
+        let cam = Arc::clone(&self._cam);
         let _publisher_thread = spawn(move || -> Result<(), Error> {
             // let publisher = publisher_clone.unwrap();
             // let active = active_clone.unwrap();
             // let delay = delay_clone.lock().unwrap();
             // let cam = cam_clone.unwrap();
             loop {
-                if *active {
+                if active {
                     let mut frame = Mat::default();
                     cam.read(&mut frame);
                     println!("Publishing frame!");
-                    publisher.publish(from_cvmat(frame).into_imgmsg());
-                    sleep(from_millis(delay));
+                    publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
+                    sleep(Duration::from_millis(delay));
                 }
             }
         });
