@@ -93,17 +93,17 @@ impl CameraServer {
             let node = node_clone.lock().unwrap();
             spin(&node)
         });
-        let active = Arc::clone(&self._active);
+        let active_clone = Arc::clone(&self._active);
         let delay = Arc::clone(&self._capture_delay);
         let publisher = Arc::clone(&self._publisher);
         let cam = Arc::clone(&self._cam);
         let _publisher_thread = spawn(move || -> Result<(), Error> {
             // let publisher = publisher_clone.unwrap();
-            // let active = active_clone.unwrap();
+            let active = active_clone.lock().unwrap();
             // let delay = delay_clone.lock().unwrap();
             // let cam = cam_clone.unwrap();
             loop {
-                if *active {
+                if active {
                     let mut frame = Mat::default();
                     cam.read(&mut frame);
                     println!("Publishing frame!");
