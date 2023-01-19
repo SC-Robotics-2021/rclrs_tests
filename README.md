@@ -1,4 +1,4 @@
-# rclrs_tests
+# science_2022_23
 Command and control software for SC Robotics' science subsystem.
 
 Developed using ROS2 and implemented using Rust.
