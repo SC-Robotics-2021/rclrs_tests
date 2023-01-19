@@ -52,13 +52,12 @@ pub struct CameraServer {
     _node: Arc<Mutex<Node>>,
     _publisher: Arc<Publisher<Image>>,
     _camera_id: Arc<i32>,
-    _camera_settings: Arc<Vector<i32>>,
     _active: Arc<Mutex<bool>>,
     _server: Arc<Service<SetBool>>
 }
 
 impl CameraServer {
-    pub fn new(device: String, camera_id: i32, camera_settings: Vector<i32>) -> Result<Self, Error> { // capture delay is in milliseconds
+    pub fn new(device: String, camera_id: i32) -> Result<Self, Error> { // capture delay is in milliseconds
         let _node = Arc::new(Mutex::new(Node::new(&Context::new(args())?, format!("{}_server", &device).as_str())?));
         let node_clone = Arc::clone(&_node);
         let mut node = node_clone.lock().unwrap();
@@ -82,8 +81,7 @@ impl CameraServer {
             }
         )?;
         let _camera_id = Arc::new(camera_id);
-        let _camera_settings = Arc::new(camera_settings);
-        Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _camera_id:_camera_id, _camera_settings:_camera_settings, _active:_active})
+        Ok(Self{_node:_node, _server:_server, _publisher:_publisher, _camera_id:_camera_id, _active:_active})
     }
 
     pub fn run(&self) {
@@ -95,12 +93,16 @@ impl CameraServer {
 
         let publisher = Arc::clone(&self._publisher);
         let camera_id = Arc::clone(&self._camera_id);
-        let camera_settings = Arc::clone(&self._camera_settings);
         let active_clone = Arc::clone(&self._active);
 
         let _publisher_thread = spawn(move || {
             let active = active_clone.lock().unwrap();
-            let mut cam = videoio::VideoCapture::new_with_params(*camera_id, videoio::CAP_ANY, &*camera_settings).unwrap();
+            let camera_id = 2;
+            let frame_width = 640; 
+            let frame_height = 480;
+            let fps = 30;
+            let camera_settings = CameraServer::get_camera_settings(frame_width, frame_height, fps);
+            let mut cam = videoio::VideoCapture::new_with_params(*camera_id, videoio::CAP_ANY, &camera_settings).unwrap();
             loop {
                 if *active {
                     let mut frame = Mat::default();
@@ -113,7 +115,7 @@ impl CameraServer {
         });
     }
 
-    pub fn define_settings(frame_width: i32, frame_height: i32, fps: i32) -> Vector<i32> {
+    pub fn get_camera_settings(frame_width: i32, frame_height: i32, fps: i32) -> Vector<i32> {
         let mut settings = Vector::with_capacity(6);
         settings.push(videoio::CAP_PROP_FRAME_WIDTH);
         settings.push(frame_width);
