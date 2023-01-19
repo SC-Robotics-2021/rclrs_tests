@@ -4,6 +4,8 @@ Command and control software for SC Robotics' science subsystem.
 Developed using ROS2 and implemented using Rust.
 
 ## Installation
+***This section only needs to be done once per computer.***
+
 In your workspace's root directory clone the repository using the following command: `git clone git@github.com:SC-Robotics-2021/science_2022_23.git src`.
 
 There is a provided script that will provision your computer with the necessary source code needed to run ROS2 in rust. You can do this from within the directory of the repo by running one the following two commands depending on your ROS2 version:
@@ -25,7 +27,7 @@ Building ROS2 packages written in Rust can be done as with any other language th
 
 `colcon build --symlink-install; colcon build --symlink install --packages-skip-build-finished`
 
-There is currently and issue were if you attempt to build all the packages at once, science_clients_rs and science_servers_rs will fail to build. If you build twice, the packages will finished. The command above builds in two steps, which seems to be an sufficient workaround to get everything to work for the time being.
+There is currently and issue were if you attempt to build all the packages at once, science_clients_rs and science_servers_rs will fail to build. If you build twice, the packages will finish cleanly. The command above builds in two steps, which seems to be an sufficient workaround to get everything to work for the time being.
 
 ## Running the code
 These packages can be run just as if it were any other package. If you would like to test any of the nodes individually use the following commands:
