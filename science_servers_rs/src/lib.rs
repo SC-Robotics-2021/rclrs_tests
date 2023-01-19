@@ -98,9 +98,9 @@ impl CameraServer {
         let _publisher_thread = spawn(move || {
             let active = active_clone.lock().unwrap();
             let mut cam = videoio::VideoCapture::new(*camera_id, videoio::CAP_ANY).unwrap();
-            cam.set(videoio::CAP_PROP_FRAME_WIDTH, 640);
-            cam.set(videoio::CAP_PROP_FRAME_HEIGHT, 480);
-            cam.set(videoio::CAP_PROP_FPS, 30);
+            cam.set(videoio::CAP_PROP_FRAME_WIDTH, 640.0);
+            cam.set(videoio::CAP_PROP_FRAME_HEIGHT, 480.0);
+            cam.set(videoio::CAP_PROP_FPS, 30.0);
             loop {
                 if *active {
                     let mut frame = Mat::default();
