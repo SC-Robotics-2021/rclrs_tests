@@ -97,33 +97,20 @@ impl CameraServer {
 
         let _publisher_thread = spawn(move || {
             let active = active_clone.lock().unwrap();
-            let camera_id = 2;
-            let frame_width = 640; 
-            let frame_height = 480;
-            let fps = 30;
-            let camera_settings = CameraServer::get_camera_settings(frame_width, frame_height, fps);
-            let mut cam = videoio::VideoCapture::new_with_params(*camera_id, videoio::CAP_ANY, &camera_settings).unwrap();
+            let mut cam = videoio::VideoCapture::new(*camera_id, videoio::CAP_ANY).unwrap();
+            cam.set(videoio::CAP_PROP_FRAME_WIDTH, 640);
+            cam.set(videoio::CAP_PROP_FRAME_HEIGHT, 480);
+            cam.set(videoio::CAP_PROP_FPS, 30);
             loop {
                 if *active {
                     let mut frame = Mat::default();
                     let _ = cam.read(&mut frame);
                     println!("Publishing frame!");
                     let _ = publisher.publish(CvImage::from_cvmat(frame).into_imgmsg());
-                    sleep(Duration::from_millis((1000 as u64)/(camera_settings.get(5).unwrap() as u64)));
+                    sleep(Duration::from_millis((1000 as u64)/(30 as u64)));
                 }
             }
         });
-    }
-
-    pub fn get_camera_settings(frame_width: i32, frame_height: i32, fps: i32) -> Vector<i32> {
-        let mut settings = Vector::with_capacity(6);
-        settings.push(videoio::CAP_PROP_FRAME_WIDTH);
-        settings.push(frame_width);
-        settings.push(videoio::CAP_PROP_FRAME_HEIGHT);
-        settings.push(frame_height);
-        settings.push(videoio::CAP_PROP_FPS);
-        settings.push(fps);
-        settings
     }
 }
 
