@@ -9,7 +9,8 @@ If any warnings or errors are displaying, then please rerun the bash script abov
 
 ## Buidling the code.
 Building ROS2 packages written in Rust can be done as with any other language that ROS2 supports. To build the package, run: \
-`colcon build --symlink-install`.
+`colcon build --symlink-install; colcon build --symlink install --packages-skip-build-finished` \
+There is currently and issue were if you attempt to build all the packages at once, science_clients_rs and science_servers_rs will fail to build. If you build twice, the packages will finished. The command above builds in two steps, which seems to be an sufficient workaround to get everything to work for the time being.
 
 ## Running the code
 These packages can be run just as if it were any other package. If you would like to test any of the nodes individually use the following commands:
