@@ -55,7 +55,7 @@ At the moment there is no launch file for the client side nodes as there need's 
 `ros2 run science_servers_rs water_pump_server`
 
 To run all the server-side node (those which would be executing on-board the rover) please run: \
-`ros2 launch science_servers_rs science_servers_rs.launch.xml`.
+`ros2 launch science_servers_rs science_servers.launch.xml`.
 
 ## Notes
 There currently is not command and control for the turret implemented for the repository as the encoded motor chosen to drive it has been changed in our design. Once more information is available about this motor, additional source code will be included in this repo.
