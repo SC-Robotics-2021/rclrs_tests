@@ -32,7 +32,7 @@ path = "./src/water_pump_client.rs"
 [dependencies]
 anyhow = "*"
 rclrs = "*"
-opencv = "0.74"
+opencv = "0.75"
 cv_bridge_rs = "*"
 sensor_msgs = "*"
 std_srvs = "*"

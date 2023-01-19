@@ -10,7 +10,7 @@ install_to_share = ["launch"]
 [dependencies]
 anyhow = "*"
 rclrs = "*"
-opencv = "0.74"
+opencv = "0.75"
 cv_bridge_rs = "*"
 sensor_msgs = "*"
 std_srvs = "*"
