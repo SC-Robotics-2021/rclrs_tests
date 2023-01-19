@@ -1,5 +1,7 @@
 # rclrs_tests
-Testing environment for ROS2 using Rust's `rcrlrs` crate
+Command and control software for SC Robotics' science subsystem.
+
+Developed using ROS2 and implemented using Rust.
 
 ## Installing rust
 There is a provided script that will provision your computer with the necessary source code needed to run ROS2 in rust. You can do this from within the directory of the repo by running: `chmod +x ./ros2_rust_setup.bash && ./ros2_rust_setup.bash`. \
