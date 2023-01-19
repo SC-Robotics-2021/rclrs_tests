@@ -2,8 +2,23 @@
 name = "science_servers_rs"
 version = "1.0.0"
 edition = "2021"
+authors = ["Austin Lake <austinlake04@gmail.com>"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package.metadata.ros]
+install_to_share = ["launch"]
+
+[dependencies]
+anyhow = "*"
+rclrs = "*"
+opencv = "0.74"
+cv_bridge_rs = "*"
+sensor_msgs = "*"
+std_srvs = "*"
+input-macro ="*"
+science_interfaces_rs = "*"
+colored = "*"
+rppal = "*"
+
 [[bin]]
 name = "brush_server"
 path = "./src/brush_server.rs"
@@ -28,16 +43,3 @@ path = "./src/vacuum_server.rs"
 [[bin]]
 name = "water_pump_server"
 path = "./src/water_pump_server.rs"
-
-
-[dependencies]
-anyhow = "*"
-rclrs = "*"
-opencv = "0.74"
-cv_bridge_rs = "*"
-sensor_msgs = "*"
-std_srvs = "*"
-input-macro ="*"
-science_interfaces_rs = "*"
-colored = "*"
-rppal = "*"

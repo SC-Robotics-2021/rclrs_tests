@@ -100,7 +100,7 @@ impl CameraServer {
 
         let _publisher_thread = spawn(move || {
             let active = active_clone.lock().unwrap();
-            let mut cam = videoio::VideoCapture::new_with_params(*camera_id, videoio::CAP_ANY, &*camera_settings).unwrap();
+            let mut cam = videoio::VideoCapture::new(*camera_id, videoio::CAP_ANY, &*camera_settings).unwrap();
             loop {
                 if *active {
                     let mut frame = Mat::default();
