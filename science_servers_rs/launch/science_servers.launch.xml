@@ -1,0 +1,12 @@
+<launch>
+
+  <node pkg="science_servers" exec="brush_server" name="brush_server"/>
+  <node pkg="science_servers" exec="ir_camera_server" name="ir_camera_server"/>
+  <node pkg="science_servers" exec="microscope_server" name="microscope_server"/>
+  <node pkg="science_servers" exec="stepper_motor_server" name="stepper_motor_server"/>
+  <node pkg="science_servers" exec="uv_camera_server" name="uv_camera_server"/>
+  <node pkg="science_servers" exec="uv_light_server" name="uv_light_server"/>
+  <node pkg="science_servers" exec="vacuum_server" name="vacuum_server"/>
+  <node pkg="science_servers" exec="water_pump_server" name="water_pump_server"/>
+
+</launch>

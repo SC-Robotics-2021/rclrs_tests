@@ -1,5 +1,5 @@
 [package]
-name = "cv_bridge"
+name = "cv_bridge_rs"
 version = "0.2.0"
 edition = "2021"
 authors = ["Omkar Kabadagi <kabadagiomkar@gmail.com>"]
@@ -15,6 +15,6 @@ repository = "https://github.com/OmkarKabadagi5823/cv-bridge-rs.git"
 anyhow = "*"
 byteorder = "1.4.3"
 image = "0.24.5"
-opencv = "0.74.2"
+opencv = "0.75"
 std_msgs = "*"
 sensor_msgs = "*"
