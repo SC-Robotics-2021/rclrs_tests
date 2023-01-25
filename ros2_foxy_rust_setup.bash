@@ -9,5 +9,5 @@ sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 source ~/.cargo/env && cargo install --debug cargo-ament-build
 echo "source ~/.cargo/env" >> ~/.bashrc
 python3 -m pip install git+https://github.com/colcon/colcon-cargo.git git+https://github.com/colcon/colcon-ros-cargo.git
-vcs import .. < ros2_rust_foxy.repos
+vcs import .. < ros2_foxy_rust.repos
 cd -
